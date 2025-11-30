@@ -174,7 +174,7 @@ export const ExportPanel = ({ onNotify }: ExportPanelProps) => {
         <div className="format-table">
           <div className="format-header">
             <span>Name</span>
-            <span>Domain</span>
+            <span>Profession</span>
             <span>Type</span>
             <span>Check-in Time</span>
           </div>

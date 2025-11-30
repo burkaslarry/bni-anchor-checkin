@@ -29,6 +29,8 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
   const [scanStatus, setScanStatus] = useState<"idle" | "scanning" | "success" | "error">("idle");
   const [supportsDetector, setSupportsDetector] = useState(false);
   const [lastScanned, setLastScanned] = useState("");
+  const [eventInfo, setEventInfo] = useState<{ eventName: string; eventDate: string } | null>(null);
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
 
   // Fetch members list
   useEffect(() => {
@@ -80,6 +82,7 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
   const handleScan = async () => {
     if (!supportsDetector || !detectorRef.current || !videoRef.current) {
       onNotify("此裝置不支援 QR 掃描", "error");
+      setShowAdminDialog(true);
       return;
     }
 
@@ -89,6 +92,7 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
     if (!video.videoWidth || !video.videoHeight) {
       onNotify("相機尚未準備好", "error");
       setScanStatus("idle");
+      setShowAdminDialog(true);
       return;
     }
 
@@ -107,45 +111,60 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
       const qrData = barcodes[0].rawValue;
       setLastScanned(qrData);
       
-      // Try to parse QR and find matching member
-      let memberName = "";
-      
+      // Try to parse QR code
       try {
         const parsed = JSON.parse(qrData);
+        
+        // Check if it's an event QR code
+        if (parsed.eventName && parsed.eventDate) {
+          setEventInfo({ eventName: parsed.eventName, eventDate: parsed.eventDate });
+          setScanStatus("success");
+          onNotify(`✅ 活動確認: ${parsed.eventName} (${parsed.eventDate})`, "success");
+          // Show member selection after successful event scan
+          return;
+        }
+        
+        // Check if it's a member QR code
         if (parsed.name && parsed.type === "member") {
-          memberName = parsed.name;
+          const match = members.find(
+            (m) => m.name.toLowerCase() === parsed.name.toLowerCase()
+          );
+          if (match) {
+            setSelectedMember(match.name);
+            setScanStatus("success");
+            onNotify(`✅ 已識別會員: ${match.name}`, "success");
+            return;
+          }
         }
       } catch {
+        // Not JSON, try other formats
         const parts = qrData.split("-");
         if (parts.length >= 2 && parts[1] === "ANCHOR") {
-          memberName = parts[0];
+          const memberName = parts[0];
+          const match = members.find(
+            (m) => m.name.toLowerCase() === memberName.toLowerCase()
+          );
+          if (match) {
+            setSelectedMember(match.name);
+            setScanStatus("success");
+            onNotify(`✅ 已識別會員: ${match.name}`, "success");
+            return;
+          }
         }
       }
 
-      // Find matching member in list
-      if (memberName) {
-        const match = members.find(
-          (m) => m.name.toLowerCase() === memberName.toLowerCase()
-        );
-        if (match) {
-          setSelectedMember(match.name);
-          setScanStatus("success");
-          onNotify(`已識別會員: ${match.name}`, "success");
-        } else {
-          setScanStatus("error");
-          onNotify(`找不到會員: ${memberName}`, "error");
-        }
-      } else {
-        setScanStatus("error");
-        onNotify("QR 碼格式不正確", "error");
-      }
+      // QR code not recognized
+      setScanStatus("error");
+      onNotify("⚠️ QR 碼格式無法識別", "error");
+      setShowAdminDialog(true);
     } catch {
       setScanStatus("error");
-      onNotify("未偵測到 QR 碼", "error");
+      onNotify("⚠️ 未偵測到 QR 碼", "error");
+      setShowAdminDialog(true);
     }
   };
 
-  // Submit check-in (only submit name, backend will lookup domain)
+  // Submit check-in
   const handleSubmit = async () => {
     if (!selectedMember) {
       onNotify("請選擇會員", "error");
@@ -165,6 +184,7 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
         setSelectedMember("");
         setLastScanned("");
         setScanStatus("idle");
+        setEventInfo(null);
       } else {
         onNotify(`❌ ${result.message}`, "error");
       }
@@ -184,15 +204,25 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
     }
   };
 
-  // Get selected member's domain for preview
   const selectedMemberInfo = members.find(m => m.name === selectedMember);
 
   return (
     <section className="section checkin-panel member-checkin">
       <div className="section-header">
         <h2>👤 會員簽到</h2>
-        <p className="hint">掃描 QR 碼或從下拉選單選擇會員</p>
+        <p className="hint">掃描活動 QR 碼，然後選擇會員</p>
       </div>
+
+      {/* Event Info Display */}
+      {eventInfo && (
+        <div className="event-info-banner">
+          <span className="event-icon">📅</span>
+          <div>
+            <strong>{eventInfo.eventName}</strong>
+            <span className="event-date">{eventInfo.eventDate}</span>
+          </div>
+        </div>
+      )}
 
       {/* Camera Scanner */}
       <div className="scanner-section">
@@ -203,19 +233,37 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
           className="button scan-button"
           type="button"
           onClick={handleScan}
-          disabled={!supportsDetector || scanStatus === "scanning"}
+          disabled={scanStatus === "scanning"}
         >
           {scanStatus === "scanning" ? "⏳ 掃描中..." : "📷 掃描 QR 碼"}
         </button>
         {lastScanned && (
           <p className="hint scanned-data">
-            已掃描: <code>{lastScanned.substring(0, 50)}...</code>
+            已掃描: <code>{lastScanned.substring(0, 50)}{lastScanned.length > 50 ? "..." : ""}</code>
           </p>
         )}
       </div>
 
+      {/* Admin Warning Dialog */}
+      {showAdminDialog && (
+        <div className="admin-warning-dialog">
+          <div className="warning-content">
+            <span className="warning-icon">⚠️</span>
+            <h3>QR 掃描失敗</h3>
+            <p>請從下方選單手動選擇會員進行簽到</p>
+            <button 
+              className="button" 
+              type="button"
+              onClick={() => setShowAdminDialog(false)}
+            >
+              確定
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="divider">
-        <span>或選擇會員</span>
+        <span>選擇會員</span>
       </div>
 
       {/* Member Dropdown */}

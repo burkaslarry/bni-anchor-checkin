@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getRecords, clearRecords, deleteRecord, CheckInRecord } from "../api";
+import { exportRecords, getRecords, clearRecords, deleteRecord, CheckInRecord } from "../api";
 
 type RecordsPanelProps = {
   onNotify: (message: string, type: "success" | "error" | "info") => void;
@@ -12,6 +12,12 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
   const [filter, setFilter] = useState<"all" | "member" | "guest">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [filename, setFilename] = useState(() => {
+    const today = new Date().toISOString().split("T")[0];
+    return `BNI_Anchor_${today}`;
+  });
+  const [isExporting, setIsExporting] = useState(false);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(true);
 
   const fetchRecords = useCallback(async () => {
     setIsLoading(true);
@@ -36,6 +42,31 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
       onNotify("❌ 清除失敗", "error");
     } finally {
       setIsClearing(false);
+    }
+  };
+
+  const handleExportFromServer = async () => {
+    if (!filename.trim()) {
+      onNotify("請輸入檔案名稱", "error");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const blob = await exportRecords();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${filename.trim()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      onNotify(`✅ ${filename}.csv 已下載`, "success");
+    } catch {
+      onNotify("❌ 從伺服器匯出失敗", "error");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -208,6 +239,20 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
       </div>
 
       <div className="records-footer">
+
+        <div className="export-actions">
+
+        {records.length > 0 && ( 
+          <button
+          className="button export-btn primary"
+          type="button"
+          onClick={handleExportFromServer}
+          disabled={isExporting}
+        >
+          {isExporting ? "⏳ 處理中..." : "📥 從伺服器匯出"}
+        </button>        
+        )}
+        </div>
         <p className="hint">
           顯示 {filteredRecords.length} / {records.length} 筆記錄
         </p>

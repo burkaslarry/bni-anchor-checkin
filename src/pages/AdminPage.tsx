@@ -4,10 +4,9 @@ import { NotificationStack } from "../components/NotificationStack";
 import { NotificationEntry } from "../components/ScanPanel";
 import { QRGeneratorPanel } from "../components/QRGeneratorPanel";
 import { RecordsPanel } from "../components/RecordsPanel";
-import { ExportPanel } from "../components/ExportPanel";
-import { SearchMemberPanel } from "../components/SearchMemberPanel";
+import { AdminManualEntryPanel } from "../components/AdminManualEntryPanel";
 
-type AdminView = "home" | "generate" | "records" | "export" | "member";
+type AdminView = "home" | "generate" | "records" | "manual";
 
 const navTargets: { id: AdminView; title: string; description: string; icon: string }[] = [
   {
@@ -18,15 +17,15 @@ const navTargets: { id: AdminView; title: string; description: string; icon: str
   },
   {
     id: "records",
-    title: "簽到記錄",
-    description: "查看所有簽到資料",
+    title: "簽到記錄 & 匯出",
+    description: "查看記錄並匯出 CSV",
     icon: "📋"
   },
   {
-    id: "export",
-    title: "匯出資料",
-    description: "匯出 CSV 檔案",
-    icon: "📥"
+    id: "manual",
+    title: "手動輸入",
+    description: "管理員手動新增記錄",
+    icon: "✍️"
   }
 ];
 
@@ -60,21 +59,14 @@ export default function AdminPage() {
     [notifyMessage]
   );
 
-  const handleSearchNotification = useCallback(
-    (message: string) => notifyMessage(message, "error"),
-    [notifyMessage]
-  );
-
   const renderView = () => {
     switch (activeView) {
       case "generate":
         return <QRGeneratorPanel onNotify={handlePanelNotification} />;
       case "records":
         return <RecordsPanel onNotify={handlePanelNotification} />;
-      case "export":
-        return <ExportPanel onNotify={handlePanelNotification} />;
-      case "member":
-        return <SearchMemberPanel onNotify={handleSearchNotification} />;
+      case "manual":
+        return <AdminManualEntryPanel onNotify={handlePanelNotification} />;
       default:
         return null;
     }
@@ -87,11 +79,11 @@ export default function AdminPage() {
       <header className="site-header">
         <div>
           <p className="hint">BNI Anchor Checkin</p>
-          <h1>🛠️ 管理工具</h1>
+          <h1>🛠️ BNI Anchor Checkin 管理後台</h1>
           <p className="hint">Admin Dashboard</p>
         </div>
         <div className="header-meta">
-          <Link to="/" className="ghost-button back-home-btn">
+          <Link to="/admin" className="ghost-button back-home-btn">
             ← 返回首頁
           </Link>
         </div>
@@ -129,7 +121,15 @@ export default function AdminPage() {
       )}
 
       {renderView()}
+
+      <footer className="site-footer">
+        <p>
+          Powered by{" "}
+          <a href="https://innovatexp.co" target="_blank" rel="noopener noreferrer">
+            InnovateXP Limited
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }
-
