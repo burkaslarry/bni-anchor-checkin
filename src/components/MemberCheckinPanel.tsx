@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { checkIn, getMembers } from "../api";
+import { checkIn, getMembers, MemberInfo } from "../api";
 
 interface BarcodeDetectorOptions {
   formats?: string[];
@@ -23,7 +23,7 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<BarcodeDetector | null>(null);
   
-  const [members, setMembers] = useState<string[]>([]);
+  const [members, setMembers] = useState<MemberInfo[]>([]);
   const [selectedMember, setSelectedMember] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scanStatus, setScanStatus] = useState<"idle" | "scanning" | "success" | "error">("idle");
@@ -108,7 +108,6 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
       setLastScanned(qrData);
       
       // Try to parse QR and find matching member
-      // Format: {name}-ANCHOR-{date} or JSON format
       let memberName = "";
       
       try {
@@ -117,7 +116,6 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
           memberName = parsed.name;
         }
       } catch {
-        // Try simple format: Name-ANCHOR-Date
         const parts = qrData.split("-");
         if (parts.length >= 2 && parts[1] === "ANCHOR") {
           memberName = parts[0];
@@ -127,12 +125,12 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
       // Find matching member in list
       if (memberName) {
         const match = members.find(
-          (m) => m.toLowerCase() === memberName.toLowerCase()
+          (m) => m.name.toLowerCase() === memberName.toLowerCase()
         );
         if (match) {
-          setSelectedMember(match);
+          setSelectedMember(match.name);
           setScanStatus("success");
-          onNotify(`已識別會員: ${match}`, "success");
+          onNotify(`已識別會員: ${match.name}`, "success");
         } else {
           setScanStatus("error");
           onNotify(`找不到會員: ${memberName}`, "error");
@@ -147,7 +145,7 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
     }
   };
 
-  // Submit check-in
+  // Submit check-in (only submit name, backend will lookup domain)
   const handleSubmit = async () => {
     if (!selectedMember) {
       onNotify("請選擇會員", "error");
@@ -168,13 +166,11 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
         setLastScanned("");
         setScanStatus("idle");
       } else {
-        // Extract just the message without JSON structure
         onNotify(`❌ ${result.message}`, "error");
       }
     } catch (error) {
       let message = "簽到失敗";
       if (error instanceof Error) {
-        // Try to parse JSON error message
         try {
           const parsed = JSON.parse(error.message);
           message = parsed.message || error.message;
@@ -187,6 +183,9 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
       setIsSubmitting(false);
     }
   };
+
+  // Get selected member's domain for preview
+  const selectedMemberInfo = members.find(m => m.name === selectedMember);
 
   return (
     <section className="section checkin-panel member-checkin">
@@ -230,8 +229,8 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
         >
           <option value="">-- 請選擇會員 --</option>
           {members.map((member) => (
-            <option key={member} value={member}>
-              {member}
+            <option key={member.name} value={member.name}>
+              {member.name} - {member.domain}
             </option>
           ))}
         </select>
@@ -245,6 +244,9 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
             <span className="preview-icon">👤</span>
             <div>
               <strong>{selectedMember}</strong>
+              {selectedMemberInfo && (
+                <span className="domain-text">{selectedMemberInfo.domain}</span>
+              )}
               <span className="type-badge member">會員</span>
             </div>
           </div>
@@ -265,4 +267,3 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
     </section>
   );
 };
-

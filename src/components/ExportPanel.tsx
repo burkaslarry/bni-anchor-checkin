@@ -183,7 +183,6 @@ export const ExportPanel = ({ onNotify }: ExportPanelProps) => {
             <span>陪月服務</span>
             <span>member</span>
             <span>2025-11-26T09:30:00</span>
-            <span>2025-11-26T09:30:05</span>
           </div>
         </div>
       </div>

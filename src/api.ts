@@ -22,6 +22,12 @@ export type CheckInRequest = {
   name: string;
   type: string;
   currentTime: string;
+  domain?: string;
+};
+
+export type MemberInfo = {
+  name: string;
+  domain: string;
 };
 
 // Kotlin backend running on port 8080
@@ -75,8 +81,8 @@ export async function searchEventAttendance(
   return handleResponse(response);
 }
 
-// Get list of members
-export async function getMembers(): Promise<{ members: string[] }> {
+// Get list of members with domain info
+export async function getMembers(): Promise<{ members: MemberInfo[] }> {
   const response = await fetch(`${API_BASE}/api/members`, { mode: "cors" });
   return handleResponse(response);
 }
