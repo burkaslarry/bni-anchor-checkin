@@ -836,6 +836,22 @@ td {
   background: #dc2626;
 }
 
+.delete-btn {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--error);
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--error);
+}
+
 /* ===== Export Panel ===== */
 .export-panel {
   display: flex;
@@ -1107,6 +1123,13 @@ td {
   border-color: var(--accent);
   color: var(--accent);
   background: rgba(56, 189, 248, 0.05);
+}
+
+.back-home-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 /* Admin Panel */

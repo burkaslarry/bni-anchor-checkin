@@ -108,6 +108,15 @@ export async function clearRecords(): Promise<{ status: string; message: string 
   return handleResponse(response);
 }
 
+// Delete a specific record by index
+export async function deleteRecord(index: number): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/records/${index}`, {
+    method: "DELETE",
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
 // Export records as CSV (returns blob URL)
 export async function exportRecords(): Promise<Blob> {
   const response = await fetch(`${API_BASE}/api/export`, { mode: "cors" });

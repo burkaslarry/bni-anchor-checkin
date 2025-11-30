@@ -168,10 +168,20 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
         setLastScanned("");
         setScanStatus("idle");
       } else {
-        throw new Error(result.message);
+        // Extract just the message without JSON structure
+        onNotify(`❌ ${result.message}`, "error");
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "簽到失敗";
+      let message = "簽到失敗";
+      if (error instanceof Error) {
+        // Try to parse JSON error message
+        try {
+          const parsed = JSON.parse(error.message);
+          message = parsed.message || error.message;
+        } catch {
+          message = error.message;
+        }
+      }
       onNotify(`❌ ${message}`, "error");
     } finally {
       setIsSubmitting(false);

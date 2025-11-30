@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getRecords, clearRecords, CheckInRecord } from "../api";
+import { getRecords, clearRecords, deleteRecord, CheckInRecord } from "../api";
 
 type RecordsPanelProps = {
   onNotify: (message: string, type: "success" | "error" | "info") => void;
@@ -36,6 +36,16 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
       onNotify("❌ 清除失敗", "error");
     } finally {
       setIsClearing(false);
+    }
+  };
+
+  const handleDeleteRecord = async (index: number, name: string) => {
+    try {
+      await deleteRecord(index);
+      setRecords((prev) => prev.filter((_, i) => i !== index));
+      onNotify(`✅ 已刪除 ${name}`, "success");
+    } catch {
+      onNotify("❌ 刪除失敗", "error");
     }
   };
 
@@ -145,7 +155,7 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
               <th>姓名</th>
               <th>類型</th>
               <th>簽到時間</th>
-              <th>伺服器時間</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -165,21 +175,33 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
                 </td>
               </tr>
             )}
-            {filteredRecords.map((record, index) => (
-              <tr key={`${record.name}-${record.timestamp}-${index}`}>
-                <td className="row-number">{filteredRecords.length - index}</td>
-                <td className="name-cell">{record.name}</td>
-                <td>
-                  <span
-                    className={`type-badge ${record.type.toLowerCase()}`}
-                  >
-                    {record.type.toLowerCase() === "member" ? "👤 會員" : "🎫 來賓"}
-                  </span>
-                </td>
-                <td className="time-cell">{formatTime(record.timestamp)}</td>
-                <td className="time-cell">{formatTime(record.receivedAt)}</td>
-              </tr>
-            ))}
+            {filteredRecords.map((record, index) => {
+              const originalIndex = records.indexOf(record);
+              return (
+                <tr key={`${record.name}-${record.timestamp}-${index}`}>
+                  <td className="row-number">{filteredRecords.length - index}</td>
+                  <td className="name-cell">{record.name}</td>
+                  <td>
+                    <span
+                      className={`type-badge ${record.type.toLowerCase()}`}
+                    >
+                      {record.type.toLowerCase() === "member" ? "👤 會員" : "🎫 來賓"}
+                    </span>
+                  </td>
+                  <td className="time-cell">{formatTime(record.timestamp)}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="delete-btn"
+                      onClick={() => handleDeleteRecord(originalIndex, record.name)}
+                      title={`刪除 ${record.name}`}
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
