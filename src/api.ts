@@ -13,6 +13,7 @@ export type EventAttendance = {
 export type CheckInRecord = {
   name: string;
   type: string;
+  domain: string;
   timestamp: string;
   receivedAt: string;
 };
@@ -21,6 +22,7 @@ export type CheckInRequest = {
   name: string;
   type: string;
   currentTime: string;
+  domain?: string;
 };
 
 // Kotlin backend running on port 8080
