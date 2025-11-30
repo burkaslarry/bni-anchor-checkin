@@ -12,6 +12,7 @@ export type EventAttendance = {
 
 export type CheckInRecord = {
   name: string;
+  domain: string;
   type: string;
   timestamp: string;
   receivedAt: string;

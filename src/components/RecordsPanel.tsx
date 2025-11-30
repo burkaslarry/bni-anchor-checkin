@@ -181,6 +181,7 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
                 <tr key={`${record.name}-${record.timestamp}-${index}`}>
                   <td className="row-number">{filteredRecords.length - index}</td>
                   <td className="name-cell">{record.name}</td>
+                  <td className="name-cell">{record.domain}</td>
                   <td>
                     <span
                       className={`type-badge ${record.type.toLowerCase()}`}

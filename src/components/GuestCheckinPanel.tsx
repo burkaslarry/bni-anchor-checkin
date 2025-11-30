@@ -24,6 +24,7 @@ export const GuestCheckinPanel = ({ onNotify }: GuestCheckinPanelProps) => {
   const detectorRef = useRef<BarcodeDetector | null>(null);
   
   const [guestName, setGuestName] = useState("");
+  const [domain, setDomain] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scanStatus, setScanStatus] = useState<"idle" | "scanning" | "success" | "error">("idle");
   const [supportsDetector, setSupportsDetector] = useState(false);
@@ -94,7 +95,6 @@ export const GuestCheckinPanel = ({ onNotify }: GuestCheckinPanelProps) => {
       setLastScanned(qrData);
       
       // Try to parse QR and extract guest name
-      // Format: {name}-GUEST-{date} or JSON format
       let extractedName = "";
       
       try {
@@ -103,12 +103,10 @@ export const GuestCheckinPanel = ({ onNotify }: GuestCheckinPanelProps) => {
           extractedName = parsed.name;
         }
       } catch {
-        // Try simple format: Name-GUEST-Date
         const parts = qrData.split("-");
         if (parts.length >= 2 && parts[1] === "GUEST") {
           extractedName = parts[0];
         } else {
-          // Use raw value as name
           extractedName = qrData;
         }
       }
@@ -133,28 +131,33 @@ export const GuestCheckinPanel = ({ onNotify }: GuestCheckinPanelProps) => {
       onNotify("請輸入來賓姓名", "error");
       return;
     }
+    
+    if (!domain.trim()) {
+      onNotify("請輸入專業領域", "error");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const result = await checkIn({
         name: guestName.trim(),
         type: "guest",
+        domain: domain.trim(),
         currentTime: new Date().toISOString()
       });
 
       if (result.status === "success") {
         onNotify(`✅ ${guestName} 簽到成功！`, "success");
         setGuestName("");
+        setDomain("");
         setLastScanned("");
         setScanStatus("idle");
       } else {
-        // Extract just the message without JSON structure
         onNotify(`❌ ${result.message}`, "error");
       }
     } catch (error) {
       let message = "簽到失敗";
       if (error instanceof Error) {
-        // Try to parse JSON error message
         try {
           const parsed = JSON.parse(error.message);
           message = parsed.message || error.message;
@@ -167,6 +170,8 @@ export const GuestCheckinPanel = ({ onNotify }: GuestCheckinPanelProps) => {
       setIsSubmitting(false);
     }
   };
+
+  const isFormValid = guestName.trim().length > 0 && domain.trim().length > 0;
 
   return (
     <section className="section checkin-panel guest-checkin">
@@ -199,9 +204,9 @@ export const GuestCheckinPanel = ({ onNotify }: GuestCheckinPanelProps) => {
         <span>或手動輸入</span>
       </div>
 
-      {/* Guest Name Input */}
+      {/* Guest Inputs */}
       <div className="form-group">
-        <label htmlFor="guest-name">來賓姓名</label>
+        <label htmlFor="guest-name">來賓姓名 Name</label>
         <input
           id="guest-name"
           className="input-field"
@@ -213,13 +218,27 @@ export const GuestCheckinPanel = ({ onNotify }: GuestCheckinPanelProps) => {
         />
       </div>
 
+      <div className="form-group">
+        <label htmlFor="guest-domain">專業領域 Domain</label>
+        <input
+          id="guest-domain"
+          className="input-field"
+          type="text"
+          placeholder="例如: 網頁設計、會計服務..."
+          value={domain}
+          onChange={(e) => setDomain(e.target.value)}
+          autoComplete="off"
+        />
+      </div>
+
       {/* Preview & Submit */}
-      {guestName.trim() && (
+      {(guestName.trim() || domain.trim()) && (
         <div className="checkin-preview">
           <div className="preview-info">
             <span className="preview-icon">🎫</span>
             <div>
-              <strong>{guestName}</strong>
+              <strong>{guestName || "—"}</strong>
+              <div className="hint">{domain || "—"}</div>
               <span className="type-badge guest">來賓</span>
             </div>
           </div>
@@ -233,11 +252,10 @@ export const GuestCheckinPanel = ({ onNotify }: GuestCheckinPanelProps) => {
         className="button submit-button"
         type="button"
         onClick={handleSubmit}
-        disabled={!guestName.trim() || isSubmitting}
+        disabled={!isFormValid || isSubmitting}
       >
         {isSubmitting ? "⏳ 處理中..." : "✅ 確認簽到"}
       </button>
     </section>
   );
 };
-

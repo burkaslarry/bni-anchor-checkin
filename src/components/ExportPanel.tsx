@@ -73,12 +73,12 @@ export const ExportPanel = ({ onNotify }: ExportPanelProps) => {
       return value;
     };
 
-    const headers = ["Name", "Type", "Check-in Time", "Server Received Time"];
+    const headers = ["姓名", "專業領域", "類別", "Check-in Time"];
     const rows = records.map((r) => [
       escapeCSV(r.name),
+      escapeCSV(r.domain),
       escapeCSV(r.type),
-      escapeCSV(r.timestamp),
-      escapeCSV(r.receivedAt)
+      escapeCSV(r.timestamp)
     ]);
 
     const csvContent = [
@@ -174,12 +174,13 @@ export const ExportPanel = ({ onNotify }: ExportPanelProps) => {
         <div className="format-table">
           <div className="format-header">
             <span>Name</span>
+            <span>Domain</span>
             <span>Type</span>
             <span>Check-in Time</span>
-            <span>Server Received Time</span>
           </div>
           <div className="format-example">
-            <span>Larry Lo</span>
+            <span>Jessica Cheung</span>
+            <span>陪月服務</span>
             <span>member</span>
             <span>2025-11-26T09:30:00</span>
             <span>2025-11-26T09:30:05</span>

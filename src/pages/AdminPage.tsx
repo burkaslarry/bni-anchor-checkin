@@ -27,12 +27,6 @@ const navTargets: { id: AdminView; title: string; description: string; icon: str
     title: "匯出資料",
     description: "匯出 CSV 檔案",
     icon: "📥"
-  },
-  {
-    id: "member",
-    title: "會員查詢",
-    description: "查詢出席歷史",
-    icon: "🔍"
   }
 ];
 
