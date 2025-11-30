@@ -10,6 +10,19 @@ export type EventAttendance = {
   status: string;
 };
 
+export type CheckInRecord = {
+  name: string;
+  type: string;
+  timestamp: string;
+  receivedAt: string;
+};
+
+export type CheckInRequest = {
+  name: string;
+  type: string;
+  currentTime: string;
+};
+
 // Kotlin backend running on port 8080
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:8080";
 
@@ -58,6 +71,63 @@ export async function searchEventAttendance(
     `${API_BASE}/api/attendance/event?date=${encodeURIComponent(date)}`,
     { signal, mode: "cors" }
   );
+  return handleResponse(response);
+}
+
+// Get list of members
+export async function getMembers(): Promise<{ members: string[] }> {
+  const response = await fetch(`${API_BASE}/api/members`, { mode: "cors" });
+  return handleResponse(response);
+}
+
+// Check-in (manual entry)
+export async function checkIn(
+  request: CheckInRequest
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/checkin`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify(request),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+// Get all check-in records
+export async function getRecords(): Promise<{ records: CheckInRecord[] }> {
+  const response = await fetch(`${API_BASE}/api/records`, { mode: "cors" });
+  return handleResponse(response);
+}
+
+// Clear all records
+export async function clearRecords(): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/records`, {
+    method: "DELETE",
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+// Export records as CSV (returns blob URL)
+export async function exportRecords(): Promise<Blob> {
+  const response = await fetch(`${API_BASE}/api/export`, { mode: "cors" });
+  if (!response.ok) {
+    throw new Error("Failed to export records");
+  }
+  return response.blob();
+}
+
+// Create event
+export async function createEvent(
+  name: string,
+  date: string
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/events`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({ name, date }),
+    mode: "cors"
+  });
   return handleResponse(response);
 }
 

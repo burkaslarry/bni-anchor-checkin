@@ -3,33 +3,67 @@ import { NotificationEntry, ScanPanel } from "./components/ScanPanel";
 import { NotificationStack } from "./components/NotificationStack";
 import { SearchEventPanel } from "./components/SearchEventPanel";
 import { SearchMemberPanel } from "./components/SearchMemberPanel";
+import { QRGeneratorPanel } from "./components/QRGeneratorPanel";
+import { ManualEntryPanel } from "./components/ManualEntryPanel";
+import { RecordsPanel } from "./components/RecordsPanel";
+import { ExportPanel } from "./components/ExportPanel";
+import { MemberCheckinPanel } from "./components/MemberCheckinPanel";
+import { GuestCheckinPanel } from "./components/GuestCheckinPanel";
 
-type Role = "Admin" | "Staff";
-type View = "home" | "scan" | "member" | "event";
+type View = "home" | "admin" | "member-checkin" | "guest-checkin" | "generate" | "scan" | "manual" | "records" | "export" | "member" | "event";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
-const navTargets: { id: View; title: string; description: string; action: string }[] = [
+// Main check-in options (featured)
+const mainCheckinOptions: { id: View; title: string; description: string; action: string; icon: string }[] = [
   {
-    id: "scan",
-    title: "Scan QR Code",
-    description: "Record attendance with the live camera and surface any queued entries.",
-    action: "Open scanner"
+    id: "member-checkin",
+    title: "會員簽到",
+    description: "BNI Anchor 會員專用，掃描 QR 或選擇姓名",
+    action: "Member Check-in",
+    icon: "👤"
+  },
+  {
+    id: "guest-checkin",
+    title: "來賓簽到",
+    description: "訪客簽到，掃描 QR 或輸入姓名",
+    action: "Guest Check-in",
+    icon: "🎫"
+  }
+];
+
+// Additional tools
+const navTargets: { id: View; title: string; description: string; action: string; icon: string }[] = [
+  {
+    id: "generate",
+    title: "產生 QR 碼",
+    description: "產生簽到用 QR Code",
+    action: "Generate QR",
+    icon: "🔳"
+  },
+  {
+    id: "records",
+    title: "簽到記錄",
+    description: "查看所有簽到資料",
+    action: "View Records",
+    icon: "📋"
+  },
+  {
+    id: "export",
+    title: "匯出資料",
+    description: "匯出 CSV 檔案",
+    action: "Export CSV",
+    icon: "📥"
   },
   {
     id: "member",
-    title: "Search by Member Name",
-    description: "Lookup attendance history and confirm presence for a member.",
-    action: "Lookup member"
-  },
-  {
-    id: "event",
-    title: "Search by Event Date",
-    description: "Review each attendee for a specific event date and status.",
-    action: "Pick event date"
+    title: "會員查詢",
+    description: "查詢出席歷史",
+    action: "Search",
+    icon: "🔍"
   }
 ];
 
@@ -38,9 +72,6 @@ const createNotificationId = () =>
 
 export default function App() {
   const [activeView, setActiveView] = useState<View>("home");
-  const [authProfile, setAuthProfile] = useState({ name: "Taylor Rivers", role: "Staff" as Role });
-  const [nameDraft, setNameDraft] = useState(authProfile.name);
-  const [roleDraft, setRoleDraft] = useState<Role>(authProfile.role);
   const [notifications, setNotifications] = useState<NotificationEntry[]>([]);
   const [isOnline, setIsOnline] = useState(() =>
     typeof navigator !== "undefined" ? navigator.onLine : true
@@ -64,14 +95,6 @@ export default function App() {
     },
     [pushNotification]
   );
-
-  const handleRoleSave = () => {
-    const finalName = nameDraft.trim() || "Team Member";
-    setAuthProfile({ name: finalName, role: roleDraft });
-    setNameDraft(finalName);
-    setRoleDraft(roleDraft);
-    notifyMessage(`Signed in as ${finalName} (${roleDraft}).`, "success");
-  };
 
   const handleInstall = useCallback(async () => {
     if (!installPrompt) {
@@ -121,17 +144,57 @@ export default function App() {
     [notifyMessage]
   );
 
+  const handlePanelNotification = useCallback(
+    (message: string, type: "success" | "error" | "info") => notifyMessage(message, type),
+    [notifyMessage]
+  );
+
   const renderView = () => {
-    if (activeView === "scan") {
-      return <ScanPanel onNotify={pushNotification} />;
+    switch (activeView) {
+      case "admin":
+        return (
+          <section className="section admin-panel">
+            <div className="section-header">
+              <h2>🛠️ 管理工具</h2>
+              <p className="hint">管理與匯出功能</p>
+            </div>
+            <div className="nav-grid">
+              {navTargets.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="nav-card"
+                  onClick={() => setActiveView(item.id)}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  <strong className="nav-title">{item.title}</strong>
+                  <span className="hint">{item.description}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        );
+      case "member-checkin":
+        return <MemberCheckinPanel onNotify={handlePanelNotification} />;
+      case "guest-checkin":
+        return <GuestCheckinPanel onNotify={handlePanelNotification} />;
+      case "generate":
+        return <QRGeneratorPanel onNotify={handlePanelNotification} />;
+      case "scan":
+        return <ScanPanel onNotify={pushNotification} />;
+      case "manual":
+        return <ManualEntryPanel onNotify={handlePanelNotification} />;
+      case "records":
+        return <RecordsPanel onNotify={handlePanelNotification} />;
+      case "export":
+        return <ExportPanel onNotify={handlePanelNotification} />;
+      case "member":
+        return <SearchMemberPanel onNotify={handleSearchNotification} />;
+      case "event":
+        return <SearchEventPanel onNotify={handleSearchNotification} />;
+      default:
+        return null;
     }
-    if (activeView === "member") {
-      return <SearchMemberPanel onNotify={handleSearchNotification} />;
-    }
-    if (activeView === "event") {
-      return <SearchEventPanel onNotify={handleSearchNotification} />;
-    }
-    return null;
   };
 
   return (
@@ -144,7 +207,6 @@ export default function App() {
           <p className="hint">Mobile-first, offline-friendly checkins with instant feedback.</p>
         </div>
         <div className="header-meta">
-          <span className="role-pill">{authProfile.role}</span>
           <span className={`connection-pill ${isOnline ? "online" : "offline"}`}>
             {isOnline ? "Online" : "Offline"}
           </span>
@@ -156,64 +218,48 @@ export default function App() {
         </div>
       </header>
 
-      <section className="section role-panel">
-        <div className="section-header">
-          <h2>Secure Access</h2>
-          <p className="hint">
-            Pick a role and name to model the Admin or Staff mindset during the session.
-          </p>
-        </div>
-        <div className="role-form">
-          <input
-            className="input-field"
-            placeholder="Enter name"
-            value={nameDraft}
-            onChange={(event) => setNameDraft(event.target.value)}
-          />
-          <select
-            className="select-field"
-            value={roleDraft}
-            onChange={(event) => setRoleDraft(event.target.value as Role)}
-          >
-            <option value="Staff">Staff</option>
-            <option value="Admin">Admin</option>
-          </select>
-          <button className="button" type="button" onClick={handleRoleSave}>
-            Apply role
-          </button>
-        </div>
-        <p className="hint">
-          Signed in as <strong>{authProfile.name}</strong> with the{" "}
-          <span className="role-pill">{authProfile.role}</span> role.
-        </p>
-      </section>
-
       {activeView === "home" && (
-        <section className="section">
-          <div className="section-header">
-            <h2>Home</h2>
-            <p className="hint">Tap a card to jump into a workflow.</p>
+        <>
+          {/* Main Check-in Options */}
+          <section className="section featured-section">
+            <div className="section-header">
+              <h2>📍 簽到入口</h2>
+              <p className="hint">選擇您的身份進行簽到</p>
+            </div>
+            <div className="checkin-buttons">
+              {mainCheckinOptions.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`checkin-card ${item.id}`}
+                  onClick={() => setActiveView(item.id)}
+                >
+                  <span className="checkin-icon">{item.icon}</span>
+                  <strong>{item.title}</strong>
+                  <span className="hint">{item.description}</span>
+                  <small className="nav-action">{item.action} →</small>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Admin Link */}
+          <div className="admin-link-container">
+            <button
+              type="button"
+              className="admin-link"
+              onClick={() => setActiveView("admin")}
+            >
+              🛠️ 管理工具 (Admin)
+            </button>
           </div>
-          <div className="nav-grid">
-            {navTargets.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className="nav-card"
-                onClick={() => setActiveView(item.id)}
-              >
-                <strong>{item.title}</strong>
-                <span className="hint">{item.description}</span>
-                <small>{item.action}</small>
-              </button>
-            ))}
-          </div>
-          <p className="hint">
+
+          <p className="hint status-hint">
             {isOnline
-              ? "Camera scanning will immediately record attendance."
-              : "Offline mode active. Scans queue locally and sync when online."}
+              ? "✅ 連線正常，簽到將即時記錄"
+              : "⚠️ 離線模式，簽到將在連線後同步"}
           </p>
-        </section>
+        </>
       )}
 
       {activeView !== "home" && (
