@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getRecords, clearRecords, deleteRecord, exportRecords, CheckInRecord } from "../api";
+import { getRecords, clearRecords, deleteRecord, CheckInRecord } from "../api";
 
 type RecordsPanelProps = {
   onNotify: (message: string, type: "success" | "error" | "info") => void;
@@ -9,7 +9,6 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
   const [records, setRecords] = useState<CheckInRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isClearing, setIsClearing] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const [filter, setFilter] = useState<"all" | "member" | "guest">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -25,16 +24,6 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
       setIsLoading(false);
     }
   }, [onNotify]);
-
-  useEffect(() => {
-    fetchRecords();
-  }, [fetchRecords]);
-
-  // Auto-refresh every 10 seconds
-  useEffect(() => {
-    const interval = setInterval(fetchRecords, 10000);
-    return () => clearInterval(interval);
-  }, [fetchRecords]);
 
   const handleClearAll = async () => {
     setIsClearing(true);
@@ -60,26 +49,15 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
     }
   };
 
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      const blob = await exportRecords();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      const date = new Date().toISOString().split("T")[0];
-      link.href = url;
-      link.download = `bni-attendance-${date}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      onNotify("✅ CSV 匯出成功", "success");
-    } catch {
-      onNotify("❌ 匯出失敗", "error");
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
+
+  // Auto-refresh every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(fetchRecords, 10000);
+    return () => clearInterval(interval);
+  }, [fetchRecords]);
 
   const filteredRecords = records.filter((record) => {
     const matchesFilter =
@@ -165,7 +143,7 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
           onClick={fetchRecords}
           disabled={isLoading}
         >
-          🔄 {isLoading ? "..." : "刷新"}
+          🔄 {isLoading ? "載入中..." : "重新整理"}
         </button>
       </div>
 
@@ -175,7 +153,6 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
             <tr>
               <th>#</th>
               <th>姓名</th>
-              <th>行業</th>
               <th>類型</th>
               <th>簽到時間</th>
               <th>操作</th>
@@ -184,14 +161,14 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
           <tbody>
             {isLoading && !records.length && (
               <tr>
-                <td colSpan={6} className="hint loading-cell">
+                <td colSpan={5} className="hint loading-cell">
                   ⏳ 載入中...
                 </td>
               </tr>
             )}
             {!isLoading && filteredRecords.length === 0 && (
               <tr>
-                <td colSpan={6} className="hint empty-cell">
+                <td colSpan={5} className="hint empty-cell">
                   {searchQuery || filter !== "all"
                     ? "沒有符合條件的記錄"
                     : "尚無簽到記錄"}
@@ -204,7 +181,6 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
                 <tr key={`${record.name}-${record.timestamp}-${index}`}>
                   <td className="row-number">{filteredRecords.length - index}</td>
                   <td className="name-cell">{record.name}</td>
-                  <td className="domain-cell">{record.domain || "—"}</td>
                   <td>
                     <span
                       className={`type-badge ${record.type.toLowerCase()}`}
@@ -235,26 +211,15 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
           顯示 {filteredRecords.length} / {records.length} 筆記錄
         </p>
         
-        <div className="footer-actions">
+        {records.length > 0 && !showClearConfirm && (
           <button
             type="button"
-            className="button export-csv-btn"
-            onClick={handleExport}
-            disabled={isExporting || records.length === 0}
+            className="ghost-button clear-all-btn"
+            onClick={() => setShowClearConfirm(true)}
           >
-            {isExporting ? "匯出中..." : "📥 匯出 CSV"}
+            🗑️ 清除全部記錄
           </button>
-
-          {records.length > 0 && !showClearConfirm && (
-            <button
-              type="button"
-              className="ghost-button clear-all-btn"
-              onClick={() => setShowClearConfirm(true)}
-            >
-              🗑️ 清除全部記錄
-            </button>
-          )}
-        </div>
+        )}
 
         {showClearConfirm && (
           <div className="clear-confirm">
@@ -282,3 +247,4 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
     </section>
   );
 };
+
