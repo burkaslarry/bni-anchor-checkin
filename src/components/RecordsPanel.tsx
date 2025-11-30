@@ -184,6 +184,7 @@ export const RecordsPanel = ({ onNotify }: RecordsPanelProps) => {
             <tr>
               <th>#</th>
               <th>姓名</th>
+              <th>專業領域</th>
               <th>類型</th>
               <th>簽到時間</th>
               <th>操作</th>
