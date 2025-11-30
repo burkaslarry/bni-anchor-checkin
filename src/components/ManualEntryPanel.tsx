@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { checkIn, getMembers } from "../api";
+import { checkIn, getMembers, MemberInfo } from "../api";
 
 type ManualEntryPanelProps = {
   onNotify: (message: string, type: "success" | "error" | "info") => void;
@@ -8,8 +8,8 @@ type ManualEntryPanelProps = {
 export const ManualEntryPanel = ({ onNotify }: ManualEntryPanelProps) => {
   const [name, setName] = useState("");
   const [isExternal, setIsExternal] = useState(false);
-  const [members, setMembers] = useState<string[]>([]);
-  const [filteredMembers, setFilteredMembers] = useState<string[]>([]);
+  const [members, setMembers] = useState<MemberInfo[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<MemberInfo[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,7 +28,7 @@ export const ManualEntryPanel = ({ onNotify }: ManualEntryPanelProps) => {
   useEffect(() => {
     if (name.trim().length >= 2 && members.length > 0) {
       const filtered = members.filter((m) =>
-        m.toLowerCase().includes(name.toLowerCase())
+        m.name.toLowerCase().includes(name.toLowerCase())
       );
       setFilteredMembers(filtered.slice(0, 5));
       setShowSuggestions(filtered.length > 0);
@@ -105,13 +105,13 @@ export const ManualEntryPanel = ({ onNotify }: ManualEntryPanelProps) => {
         {showSuggestions && filteredMembers.length > 0 && (
           <ul className="suggestions-list">
             {filteredMembers.map((member) => (
-              <li key={member}>
+              <li key={member.name}>
                 <button
                   type="button"
                   className="suggestion-item"
-                  onClick={() => handleSelectMember(member)}
+                  onClick={() => handleSelectMember(member.name)}
                 >
-                  👤 {member}
+                  👤 {member.name} - {member.domain}
                 </button>
               </li>
             ))}
@@ -172,4 +172,3 @@ export const ManualEntryPanel = ({ onNotify }: ManualEntryPanelProps) => {
     </section>
   );
 };
-
