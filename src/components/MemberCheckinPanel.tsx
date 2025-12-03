@@ -173,10 +173,14 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
 
     setIsSubmitting(true);
     try {
+      // Use local time format instead of UTC ISO string
+      const now = new Date();
+      const localTimeString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      
       const result = await checkIn({
         name: selectedMember,
         type: "member",
-        currentTime: new Date().toISOString()
+        currentTime: localTimeString
       });
 
       if (result.status === "success") {

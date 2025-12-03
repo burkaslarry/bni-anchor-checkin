@@ -1734,3 +1734,138 @@ td {
   background: #dc2626;
 }
 
+/* ===== Event Management Panel ===== */
+.event-management-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.event-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.event-card {
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.event-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.event-card-header h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: var(--accent);
+}
+
+.event-id {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.event-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+}
+
+.info-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.info-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.info-value.highlight {
+  color: var(--warn);
+}
+
+.info-value.small {
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.event-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.view-report-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refresh-btn {
+  margin-left: auto;
+}
+
+.no-event-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 1rem;
+  border: 2px dashed var(--border);
+}
+
+.no-event-state .empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.no-event-state h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text);
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--muted);
+}
+
+.delete-confirm {
+  padding: 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.75rem;
+  margin-top: 0.75rem;
+}
+
