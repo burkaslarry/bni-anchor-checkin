@@ -1,0 +1,14 @@
+
+> bni-anchor-checkin@1.0.0 dev
+> vite
+
+
+  VITE v7.2.2  ready in 110 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+7:30:43 PM [vite] (client) hmr update /src/pages/AdminPage.tsx
+7:31:18 PM [vite] (client) hmr update /src/pages/AdminPage.tsx
+7:31:25 PM [vite] (client) hmr update /src/pages/AdminPage.tsx
+7:31:46 PM [vite] (client) hmr update /src/pages/AdminPage.tsx
+7:32:02 PM [vite] (client) hmr update /src/pages/AdminPage.tsx
