@@ -22,15 +22,17 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<BarcodeDetector | null>(null);
+  const scanIntervalRef = useRef<number | null>(null);
+  const lastScannedRef = useRef<string>("");
+  const isCameraReadyRef = useRef(false);
   
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [selectedMember, setSelectedMember] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [scanStatus, setScanStatus] = useState<"idle" | "scanning" | "success" | "error">("idle");
+  const [scanStatus, setScanStatus] = useState<"idle" | "scanning" | "success" | "error">("scanning");
   const [supportsDetector, setSupportsDetector] = useState(false);
   const [lastScanned, setLastScanned] = useState("");
   const [eventInfo, setEventInfo] = useState<{ eventName: string; eventDate: string } | null>(null);
-  const [showAdminDialog, setShowAdminDialog] = useState(false);
 
   // Fetch members list
   useEffect(() => {
@@ -58,6 +60,10 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
+        // Mark camera as ready after video starts playing
+        videoRef.current.onloadedmetadata = () => {
+          isCameraReadyRef.current = true;
+        };
       }
     } catch {
       // Camera not available
@@ -68,6 +74,9 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
     void initCamera();
     return () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
+      if (scanIntervalRef.current) {
+        clearInterval(scanIntervalRef.current);
+      }
     };
   }, [initCamera]);
 
@@ -78,21 +87,14 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
     }
   }, []);
 
-  // Handle QR scan
-  const handleScan = async () => {
-    if (!supportsDetector || !detectorRef.current || !videoRef.current) {
-      onNotify("此裝置不支援 QR 掃描", "error");
-      setShowAdminDialog(true);
+  // Auto-scan function (silent, no notifications on failure)
+  const performAutoScan = useCallback(async () => {
+    if (!supportsDetector || !detectorRef.current || !videoRef.current || !isCameraReadyRef.current) {
       return;
     }
 
-    setScanStatus("scanning");
     const video = videoRef.current;
-    
     if (!video.videoWidth || !video.videoHeight) {
-      onNotify("相機尚未準備好", "error");
-      setScanStatus("idle");
-      setShowAdminDialog(true);
       return;
     }
 
@@ -105,10 +107,17 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
     try {
       const barcodes = await detectorRef.current.detect(canvas);
       if (!barcodes.length) {
-        throw new Error("No QR code detected");
+        return; // No QR code found, continue scanning silently
       }
 
       const qrData = barcodes[0].rawValue;
+      
+      // Prevent duplicate scans of the same QR code
+      if (qrData === lastScannedRef.current) {
+        return;
+      }
+      
+      lastScannedRef.current = qrData;
       setLastScanned(qrData);
       
       // Try to parse QR code
@@ -120,7 +129,6 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
           setEventInfo({ eventName: parsed.eventName, eventDate: parsed.eventDate });
           setScanStatus("success");
           onNotify(`✅ 活動確認: ${parsed.eventName} (${parsed.eventDate})`, "success");
-          // Show member selection after successful event scan
           return;
         }
         
@@ -152,17 +160,36 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
           }
         }
       }
-
-      // QR code not recognized
-      setScanStatus("error");
-      onNotify("⚠️ QR 碼格式無法識別", "error");
-      setShowAdminDialog(true);
     } catch {
-      setScanStatus("error");
-      onNotify("⚠️ 未偵測到 QR 碼", "error");
-      setShowAdminDialog(true);
+      // Silently ignore scan errors during auto-scan
     }
-  };
+  }, [supportsDetector, members, onNotify]);
+
+  // Start auto-scanning when camera and detector are ready
+  useEffect(() => {
+    if (!supportsDetector) {
+      return;
+    }
+
+    // Start scanning interval (every 300ms for faster detection)
+    scanIntervalRef.current = window.setInterval(() => {
+      void performAutoScan();
+    }, 300);
+
+    return () => {
+      if (scanIntervalRef.current) {
+        clearInterval(scanIntervalRef.current);
+        scanIntervalRef.current = null;
+      }
+    };
+  }, [supportsDetector, performAutoScan]);
+
+  // Reset lastScannedRef when user clears selection (to allow re-scan of same QR)
+  useEffect(() => {
+    if (!selectedMember && !eventInfo) {
+      lastScannedRef.current = "";
+    }
+  }, [selectedMember, eventInfo]);
 
   // Submit check-in
   const handleSubmit = async () => {
@@ -187,8 +214,9 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
         onNotify(`✅ ${selectedMember} 簽到成功！`, "success");
         setSelectedMember("");
         setLastScanned("");
-        setScanStatus("idle");
+        setScanStatus("scanning");
         setEventInfo(null);
+        lastScannedRef.current = ""; // Allow re-scan
       } else {
         onNotify(`❌ ${result.message}`, "error");
       }
@@ -232,39 +260,25 @@ export const MemberCheckinPanel = ({ onNotify }: MemberCheckinPanelProps) => {
       <div className="scanner-section">
         <div className="video-wrapper compact">
           <video ref={videoRef} muted playsInline autoPlay />
+          {scanStatus === "scanning" && supportsDetector && (
+            <div className="auto-scan-indicator">
+              <span className="pulse-dot"></span>
+              掃描中...
+            </div>
+          )}
+          {scanStatus === "success" && (
+            <div className="auto-scan-indicator success">
+              ✅ 掃描成功
+            </div>
+          )}
         </div>
-        <button
-          className="button scan-button"
-          type="button"
-          onClick={handleScan}
-          disabled={scanStatus === "scanning"}
-        >
-          {scanStatus === "scanning" ? "⏳ 掃描中..." : "📷 掃描 QR 碼"}
-        </button>
+        
         {lastScanned && (
           <p className="hint scanned-data">
             已掃描: <code>{lastScanned.substring(0, 50)}{lastScanned.length > 50 ? "..." : ""}</code>
           </p>
         )}
       </div>
-
-      {/* Admin Warning Dialog */}
-      {showAdminDialog && (
-        <div className="admin-warning-dialog">
-          <div className="warning-content">
-            <span className="warning-icon">⚠️</span>
-            <h3>QR 掃描失敗</h3>
-            <p>請從下方選單手動選擇會員進行簽到</p>
-            <button 
-              className="button" 
-              type="button"
-              onClick={() => setShowAdminDialog(false)}
-            >
-              確定
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="divider">
         <span>選擇會員</span>
