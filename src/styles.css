@@ -1278,6 +1278,61 @@ td {
   color: white;
 }
 
+.auto-scan-indicator.warning {
+  background: rgba(251, 146, 60, 0.9);
+  color: white;
+}
+
+.browser-warning {
+  background: rgba(251, 146, 60, 0.1);
+  border: 1px solid var(--warn);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  color: var(--warn);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.browser-warning p {
+  margin: 0.25rem 0;
+}
+
+.browser-warning .hint {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* Event Ended Banner */
+.event-ended-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border: 2px solid var(--error);
+  border-radius: 1rem;
+  text-align: center;
+}
+
+.event-ended-banner .ended-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.event-ended-banner .ended-content h3 {
+  font-size: 1.5rem;
+  color: var(--error);
+  margin: 0 0 1rem 0;
+}
+
+.event-ended-banner .ended-content p {
+  margin: 0.5rem 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
 .pulse-dot {
   width: 8px;
   height: 8px;

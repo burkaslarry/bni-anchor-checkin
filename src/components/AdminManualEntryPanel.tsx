@@ -135,17 +135,17 @@ export const AdminManualEntryPanel = ({ onNotify }: AdminManualEntryPanelProps) 
 
       {/* Member dropdown or Guest text input */}
       {isGuest ? (
-        <div className="form-group">
-          <label htmlFor="admin-name">姓名 Name *</label>
-          <input
-            id="admin-name"
-            className="input-field"
+      <div className="form-group">
+        <label htmlFor="admin-name">姓名 Name *</label>
+        <input
+          id="admin-name"
+          className="input-field"
             placeholder="請輸入嘉賓姓名..."
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            autoComplete="off"
-          />
-        </div>
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          autoComplete="off"
+        />
+      </div>
       ) : (
         <div className="form-group">
           <label htmlFor="admin-member-select">選擇會員 Select Member *</label>
@@ -176,7 +176,7 @@ export const AdminManualEntryPanel = ({ onNotify }: AdminManualEntryPanelProps) 
           onChange={(e) => setDomain(e.target.value)}
           autoComplete="off"
           readOnly={!isGuest && !!selectedMember}
-        />
+          />
         {!isGuest && selectedMember && (
           <p className="hint">已自動填入會員的專業領域</p>
         )}
