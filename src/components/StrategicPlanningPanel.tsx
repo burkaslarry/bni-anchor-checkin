@@ -1,8 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Guest, Member, MatchResult } from "../types/seating";
-import { assignGuestToTable } from "../lib/assignGuestToTable";
-import { sampleMembers, sampleGuests } from "../lib/sampleData";
-import { SeatingDashboard } from "./SeatingDashboard";
+import { matchGuestWithMembers } from "../lib/assignGuestToTable";
+import { sampleGuests } from "../lib/sampleData";
+import { getMembers } from "../api";
 
 type StrategicPlanningPanelProps = {
   onNotify: (message: string, type: "success" | "error" | "info") => void;
@@ -15,12 +15,6 @@ const strengthStyles: Record<MatchResult["matchStrength"], string> = {
   Low: "strength-badge low",
 };
 
-const ringStyles: Record<MatchResult["matchStrength"], string> = {
-  High: "table-ring-high",
-  Medium: "table-ring-medium",
-  Low: "table-ring-low",
-};
-
 export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningPanelProps) => {
   // Guest form state
   const [guestName, setGuestName] = useState("");
@@ -30,11 +24,8 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
   const [guestRemarks, setGuestRemarks] = useState("");
 
   // Members state
-  const [members, setMembers] = useState<Member[]>(sampleMembers);
-  const [showMemberForm, setShowMemberForm] = useState(false);
-  const [newMemberName, setNewMemberName] = useState("");
-  const [newMemberProfession, setNewMemberProfession] = useState("");
-  const [newMemberTable, setNewMemberTable] = useState(1);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
 
   // Match result state
   const [matchResult, setMatchResult] = useState<(MatchResult & { provider?: "deepseek" | "gemini" | "keyword" | null }) | null>(null);
@@ -42,23 +33,38 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
   const [isMatching, setIsMatching] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
 
-  const tables = members.reduce<Record<number, Member[]>>((acc, member) => {
-    acc[member.tableNumber] ??= [];
-    acc[member.tableNumber].push(member);
-    return acc;
-  }, {});
+  // Load real members from backend
+  useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        setIsLoadingMembers(true);
+        const data = await getMembers();
+        
+        // Convert MemberInfo[] to Member[]
+        const convertedMembers: Member[] = data.members.map((memberInfo, index) => ({
+          id: `member-${index}`,
+          name: memberInfo.name,
+          profession: memberInfo.domain,
+        }));
+        
+        setMembers(convertedMembers);
+      } catch (error) {
+        onNotify("無法載入會員名單", "error");
+        setMembers([]);
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    };
 
-  const tableNumbers = Object.keys(tables)
-    .map((value) => Number(value))
-    .sort((a, b) => a - b);
+    loadMembers();
+  }, [onNotify]);
 
   const handleMatch = async () => {
-    // Improved validation with specific field checks
+    // Improved validation with specific field checks (Target Profession is now optional)
     setShowValidation(true);
     const missingFields: string[] = [];
     if (!guestName.trim()) missingFields.push("姓名 Name");
     if (!guestProfession.trim()) missingFields.push("職業 Profession");
-    if (!guestTargetProfession.trim()) missingFields.push("目標職業 Target Profession");
     
     if (missingFields.length > 0) {
       onNotify(`請填寫以下欄位: ${missingFields.join(", ")}`, "error");
@@ -71,7 +77,7 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
       id: `guest-${Date.now()}`,
       name: guestName.trim(),
       profession: guestProfession.trim(),
-      targetProfession: guestTargetProfession.trim(),
+      targetProfession: guestTargetProfession.trim() || undefined,
       bottlenecks: guestBottlenecks
         .split(",")
         .map((b) => b.trim())
@@ -79,10 +85,12 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
       remarks: guestRemarks.trim() || undefined,
     };
 
+    // Clear previous result before starting new match
+    setMatchResult(null);
     setIsMatching(true);
     setCurrentGuest(guest);
     try {
-      const result = await assignGuestToTable(guest, members);
+      const result = await matchGuestWithMembers(guest, members);
       setMatchResult(result);
       onNotify(
         `配對完成！${result.provider === "keyword" ? "使用關鍵字配對" : `使用 ${result.provider?.toUpperCase()} AI 配對`}`,
@@ -98,37 +106,11 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
     }
   };
 
-  const handleAddMember = () => {
-    if (!newMemberName.trim() || !newMemberProfession.trim()) {
-      onNotify("請填寫會員姓名和職業", "error");
-      return;
-    }
-
-    const newMember: Member = {
-      id: `member-${Date.now()}`,
-      name: newMemberName.trim(),
-      profession: newMemberProfession.trim(),
-      tableNumber: newMemberTable,
-    };
-
-    setMembers([...members, newMember]);
-    setNewMemberName("");
-    setNewMemberProfession("");
-    setNewMemberTable(1);
-    setShowMemberForm(false);
-    onNotify("會員已添加", "success");
-  };
-
-  const handleRemoveMember = (memberId: string) => {
-    setMembers(members.filter((m) => m.id !== memberId));
-    onNotify("會員已移除", "info");
-  };
-
   const handleLoadSampleGuest = () => {
     const sample = sampleGuests[Math.floor(Math.random() * sampleGuests.length)];
     setGuestName(sample.name);
     setGuestProfession(sample.profession);
-    setGuestTargetProfession(sample.targetProfession);
+    setGuestTargetProfession(sample.targetProfession || "");
     setGuestBottlenecks(sample.bottlenecks.join(", "));
     setGuestRemarks(sample.remarks || "");
     setMatchResult(null);
@@ -148,15 +130,23 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
     onNotify("已重置表單", "info");
   };
 
-  const assignedTable = matchResult?.assignedTableNumber ?? null;
-
   return (
     <section className="section strategic-planning-panel">
       <div className="section-header">
-        <h2>🎯 Strategic Seating Matchmaker</h2>
+        <h2>🎯 Strategic Networking Matchmaker</h2>
         <p className="hint">
-          為來賓配對最佳座位 {eventId && `(活動 ID: ${eventId})`}
+          為來賓推薦最佳配對會員 {eventId && `(活動 ID: ${eventId})`}
         </p>
+        {isLoadingMembers && (
+          <p className="hint" style={{ color: 'var(--accent)' }}>
+            ⏳ 正在載入會員資料... ({members.length} 位已載入)
+          </p>
+        )}
+        {!isLoadingMembers && members.length > 0 && (
+          <p className="hint" style={{ color: 'var(--success)' }}>
+            ✓ 已載入 {members.length} 位會員資料
+          </p>
+        )}
       </div>
 
       {/* Guest Input Form */}
@@ -204,7 +194,7 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
             <input
               id="guest-profession"
               className={`input-field ${showValidation && !guestProfession.trim() ? 'input-error' : ''}`}
-              placeholder="例如: 創業家 Entrepreneur"
+              placeholder="精確職稱，如：高淨值客戶財富管理師"
               value={guestProfession}
               onChange={(e) => {
                 setGuestProfession(e.target.value);
@@ -214,23 +204,23 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
             {showValidation && !guestProfession.trim() && (
               <span className="error-text">⚠️ 此欄位為必填</span>
             )}
+            <span className="hint" style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: '0.25rem', display: 'block' }}>
+              💡 越具體越好！避免只寫「創業家」，改寫「餐飲連鎖創業家」
+            </span>
           </div>
 
           <div className="form-group">
-            <label htmlFor="guest-target">目標職業 Target Profession *</label>
+            <label htmlFor="guest-target">目標職業 Target Profession</label>
             <input
               id="guest-target"
-              className={`input-field ${showValidation && !guestTargetProfession.trim() ? 'input-error' : ''}`}
-              placeholder="例如: 建築承包商 Contractor"
+              className="input-field"
+              placeholder="例如：房地產開發商的IT採購決策者"
               value={guestTargetProfession}
-              onChange={(e) => {
-                setGuestTargetProfession(e.target.value);
-                if (showValidation && e.target.value.trim()) setShowValidation(false);
-              }}
+              onChange={(e) => setGuestTargetProfession(e.target.value)}
             />
-            {showValidation && !guestTargetProfession.trim() && (
-              <span className="error-text">⚠️ 此欄位為必填</span>
-            )}
+            <span className="hint" style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: '0.25rem', display: 'block' }}>
+              🎯 寫出具體對象，而非行業！如：「擁有大量企業客戶的保險經紀人」
+            </span>
           </div>
 
           <div className="form-group">
@@ -240,22 +230,28 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
             <input
               id="guest-bottlenecks"
               className="input-field"
-              placeholder="例如: 缺乏承包商, 需要設計合作夥伴"
+              placeholder="例如：缺乏進入政府標案的管道"
               value={guestBottlenecks}
               onChange={(e) => setGuestBottlenecks(e.target.value)}
             />
+            <span className="hint" style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: '0.25rem', display: 'block' }}>
+              🔑 這是配對的關鍵！寫出你缺什麼、誰能幫你
+            </span>
           </div>
 
           <div className="form-group full-width">
-            <label htmlFor="guest-remarks">備註 Remarks</label>
+            <label htmlFor="guest-remarks">備註 Remarks - 價值交換</label>
             <textarea
               id="guest-remarks"
               className="input-field"
-              rows={2}
-              placeholder="任何額外資訊..."
+              rows={3}
+              placeholder="我有[資源/專業]，我想找[目標對象]，我可以提供[給對方的價值]。例如：我有超過50位準客戶正在尋找專業律師合作，能分享家族辦公室設立趨勢。"
               value={guestRemarks}
               onChange={(e) => setGuestRemarks(e.target.value)}
             />
+            <span className="hint" style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: '0.25rem', display: 'block' }}>
+              ⭐ 最重要！說明你能給別人什麼價值，才能吸引高質量對接
+            </span>
           </div>
         </div>
 
@@ -263,136 +259,141 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
           type="button"
           className="button match-btn"
           onClick={handleMatch}
-          disabled={isMatching}
+          disabled={isMatching || isLoadingMembers || members.length === 0}
         >
-          {isMatching ? "⏳ 配對中..." : "🎯 開始配對"}
+          {isLoadingMembers 
+            ? "⏳ 載入會員中..." 
+            : isMatching 
+              ? "⏳ 配對中..." 
+              : members.length === 0
+                ? "❌ 無會員資料"
+                : "🎯 開始配對"}
         </button>
       </div>
 
-      {/* Match Result */}
+      {/* Match Result Summary */}
       {matchResult && currentGuest && (
         <div className="match-result-card">
           <div className="result-header">
-            <h3>配對結果 Match Result</h3>
+            <h3>配對結果</h3>
             <span className={strengthStyles[matchResult.matchStrength]}>
-              {matchResult.matchStrength} Match
+              {matchResult.matchStrength === "High" ? "高度匹配" : 
+               matchResult.matchStrength === "Medium" ? "中度匹配" : "低度匹配"}
             </span>
           </div>
           <div className="result-content">
-            <div className="result-row">
-              <strong>已分配桌號:</strong>
-              <span className="assigned-table">
-                {assignedTable ?? "未分配"}
-              </span>
-            </div>
             <div className="result-note">{matchResult.matchNote}</div>
           </div>
         </div>
       )}
 
-      {/* Tables Display */}
-      <div className="tables-section">
-        <div className="section-header">
-          <h3>座位表 Seating Chart</h3>
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => setShowMemberForm(!showMemberForm)}
-          >
-            {showMemberForm ? "✖ 取消" : "➕ 添加會員"}
-          </button>
-        </div>
+      {/* Recommended Member Combinations - Grouped by Match Strength */}
+      {matchResult && matchResult.recommendedMembers && matchResult.recommendedMembers.length > 0 && (() => {
+        const highMatches = matchResult.recommendedMembers.filter(m => m.matchStrength === "High");
+        const mediumMatches = matchResult.recommendedMembers.filter(m => m.matchStrength === "Medium");
+        const lowMatches = matchResult.recommendedMembers.filter(m => m.matchStrength === "Low");
 
-        {showMemberForm && (
-          <div className="member-form-card">
-            <div className="form-grid">
-              <div className="form-group">
-                <label htmlFor="new-member-name">會員姓名</label>
-                <input
-                  id="new-member-name"
-                  className="input-field"
-                  placeholder="例如: 張三豐"
-                  value={newMemberName}
-                  onChange={(e) => setNewMemberName(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="new-member-profession">職業</label>
-                <input
-                  id="new-member-profession"
-                  className="input-field"
-                  placeholder="例如: 室內設計師"
-                  value={newMemberProfession}
-                  onChange={(e) => setNewMemberProfession(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="new-member-table">桌號</label>
-                <input
-                  id="new-member-table"
-                  className="input-field"
-                  type="number"
-                  min={1}
-                  value={newMemberTable}
-                  onChange={(e) => setNewMemberTable(Number(e.target.value))}
-                />
-              </div>
+        return (
+          <div className="matched-members-section">
+            <div className="section-header">
+              <h3>💼 AI 推薦配對</h3>
+              <p className="hint">
+                {currentGuest?.name} ({currentGuest?.profession}) 的配對建議：
+              </p>
             </div>
-            <button
-              type="button"
-              className="button"
-              onClick={handleAddMember}
-            >
-              ✓ 添加會員
-            </button>
-          </div>
-        )}
 
-        <div className="tables-grid">
-          {tableNumbers.map((tableNumber) => {
-            const tableMembers = tables[tableNumber];
-            const isAssigned = assignedTable === tableNumber;
-            const strength = matchResult?.matchStrength ?? "Low";
-            return (
-              <div
-                key={tableNumber}
-                className={`table-card ${isAssigned ? ringStyles[strength] : ""}`}
-              >
-                <div className="table-header">
-                  <h4>Table {tableNumber}</h4>
-                  <span className="seat-count">
-                    {tableMembers.length}/8 seats
-                  </span>
+            {/* High Match Members */}
+            {highMatches.length > 0 && (
+              <div className="match-strength-group">
+                <div className="match-strength-header high">
+                  <h4>🔥 最高匹配度 ({highMatches.length})</h4>
+                  <p className="hint">強烈推薦優先交流的會員</p>
                 </div>
-                <ul className="member-list">
-                  {tableMembers.map((member) => (
-                    <li key={member.id} className="member-item">
-                      <div className="member-info">
-                        <div className="member-name">{member.name}</div>
-                        <div className="member-profession">
-                          {member.profession}
+                <div className="member-combinations-list">
+                  {highMatches.map((memberMatch, index) => (
+                    <div key={memberMatch.member.id} className="combination-card high-match">
+                      <div className="combination-header">
+                        <div className="combination-number high">#{index + 1}</div>
+                        <div className="member-info-header">
+                          <h4 className="member-name">{memberMatch.member.name}</h4>
+                          <span className={strengthStyles[memberMatch.matchStrength]}>
+                            高度匹配
+                          </span>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        className="ghost-button danger-btn small"
-                        onClick={() => handleRemoveMember(member.id)}
-                      >
-                        ✖
-                      </button>
-                    </li>
+                      <div className="member-profession">{memberMatch.member.profession}</div>
+                      <div className="match-reason">
+                        <strong>配對原因：</strong>
+                        <p>{memberMatch.reason}</p>
+                      </div>
+                    </div>
                   ))}
-                </ul>
-                {isAssigned && matchResult && (
-                  <div className="assigned-badge">
-                    ✓ 來賓已分配至此桌
-                  </div>
-                )}
+                </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
+            )}
+
+            {/* Medium Match Members */}
+            {mediumMatches.length > 0 && (
+              <div className="match-strength-group">
+                <div className="match-strength-header medium">
+                  <h4>⚡ 中度匹配 ({mediumMatches.length})</h4>
+                  <p className="hint">值得考慮交流的會員</p>
+                </div>
+                <div className="member-combinations-list">
+                  {mediumMatches.map((memberMatch, index) => (
+                    <div key={memberMatch.member.id} className="combination-card medium-match">
+                      <div className="combination-header">
+                        <div className="combination-number medium">#{index + 1}</div>
+                        <div className="member-info-header">
+                          <h4 className="member-name">{memberMatch.member.name}</h4>
+                          <span className={strengthStyles[memberMatch.matchStrength]}>
+                            中度匹配
+                          </span>
+                        </div>
+                      </div>
+                      <div className="member-profession">{memberMatch.member.profession}</div>
+                      <div className="match-reason">
+                        <strong>配對原因：</strong>
+                        <p>{memberMatch.reason}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Low Match Members */}
+            {lowMatches.length > 0 && (
+              <div className="match-strength-group">
+                <div className="match-strength-header low">
+                  <h4>💡 低度匹配 ({lowMatches.length})</h4>
+                  <p className="hint">一般人脈拓展機會</p>
+                </div>
+                <div className="member-combinations-list">
+                  {lowMatches.map((memberMatch, index) => (
+                    <div key={memberMatch.member.id} className="combination-card low-match">
+                      <div className="combination-header">
+                        <div className="combination-number low">#{index + 1}</div>
+                        <div className="member-info-header">
+                          <h4 className="member-name">{memberMatch.member.name}</h4>
+                          <span className={strengthStyles[memberMatch.matchStrength]}>
+                            低度匹配
+                          </span>
+                        </div>
+                      </div>
+                      <div className="member-profession">{memberMatch.member.profession}</div>
+                      <div className="match-reason">
+                        <strong>配對原因：</strong>
+                        <p>{memberMatch.reason}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Configuration Info */}
       <div className="config-info">
