@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { checkIn, getMembers, MemberInfo, getCurrentEvent, EventData } from "../api";
+import { checkIn, getMembers, getGuests, MemberInfo, GuestInfo, getCurrentEvent, EventData } from "../api";
 import jsQR from "jsqr";
 
 interface BarcodeDetectorOptions {
@@ -32,7 +32,10 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
   // Form state
   const [checkinType, setCheckinType] = useState<CheckinType>("member");
   const [members, setMembers] = useState<MemberInfo[]>([]);
+  const [guests, setGuests] = useState<GuestInfo[]>([]);
   const [selectedMember, setSelectedMember] = useState("");
+  const [selectedGuest, setSelectedGuest] = useState("");
+  const [guestInputMode, setGuestInputMode] = useState<"dropdown" | "manual">("dropdown");
   const [guestName, setGuestName] = useState("");
   const [guestDomain, setGuestDomain] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,18 +47,33 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
   const [scanStatus, setScanStatus] = useState<"idle" | "scanning" | "success">("idle");
   const [showQRScanner, setShowQRScanner] = useState(true);
 
-  // Fetch members list
+  // Fetch members and guests list
   useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getMembers();
-        setMembers(data.members);
+        const [membersData, guestsData] = await Promise.all([
+          getMembers(),
+          getGuests()
+        ]);
+        setMembers(membersData.members);
+        setGuests(guestsData.guests || []);
       } catch {
-        onNotify("無法載入會員名單", "error");
+        onNotify("無法載入名單", "error");
       }
     };
-    fetchMembers();
+    fetchData();
   }, [onNotify]);
+
+  // Auto-fill guest info when selecting from dropdown
+  useEffect(() => {
+    if (selectedGuest) {
+      const guest = guests.find(g => g.name === selectedGuest);
+      if (guest) {
+        setGuestName(guest.name);
+        setGuestDomain(guest.profession);
+      }
+    }
+  }, [selectedGuest, guests]);
 
   // Fetch current event and check if ended
   useEffect(() => {
@@ -515,35 +533,100 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
           {/* Guest Form */}
           {checkinType === "guest" && (
             <div className="form-group">
-              <label htmlFor="guest-name" className="form-label">
-                來賓姓名
-              </label>
-              <input
-                id="guest-name"
-                type="text"
-                value={guestName}
-                onChange={(e) => setGuestName(e.target.value)}
-                placeholder="輸入姓名"
-                className="form-input"
-              />
+              {/* Guest input mode toggle */}
+              <div className="mode-toggle-group" style={{ marginBottom: '1rem' }}>
+                <button
+                  type="button"
+                  className={`mode-toggle-btn ${guestInputMode === "dropdown" ? "active" : ""}`}
+                  onClick={() => {
+                    setGuestInputMode("dropdown");
+                    setGuestName("");
+                    setGuestDomain("");
+                    setSelectedGuest("");
+                  }}
+                >
+                  📋 已登記來賓
+                </button>
+                <button
+                  type="button"
+                  className={`mode-toggle-btn ${guestInputMode === "manual" ? "active" : ""}`}
+                  onClick={() => {
+                    setGuestInputMode("manual");
+                    setSelectedGuest("");
+                    setGuestName("");
+                    setGuestDomain("");
+                  }}
+                >
+                  ✍️ 手動輸入
+                </button>
+              </div>
 
-              <label htmlFor="guest-domain" className="form-label">
-                專業領域 (專業)
-              </label>
-              <input
-                id="guest-domain"
-                type="text"
-                value={guestDomain}
-                onChange={(e) => setGuestDomain(e.target.value)}
-                placeholder="例: 軟體開發、行銷、財務"
-                className="form-input"
-              />
+              {/* Dropdown mode - pre-registered guests */}
+              {guestInputMode === "dropdown" && (
+                <>
+                  <label htmlFor="guest-select" className="form-label">
+                    選擇已登記來賓
+                  </label>
+                  <select
+                    id="guest-select"
+                    value={selectedGuest}
+                    onChange={(e) => setSelectedGuest(e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="">-- 請選擇來賓 ({guests.length} 位) --</option>
+                    {guests.map((guest) => (
+                      <option key={guest.name} value={guest.name}>
+                        {guest.name} ({guest.profession})
+                      </option>
+                    ))}
+                  </select>
+                  {selectedGuest && (
+                    <div className="form-help" style={{ marginTop: '0.5rem', padding: '0.75rem', background: 'var(--card-bg)', borderRadius: '8px' }}>
+                      <div><strong>姓名:</strong> {guestName}</div>
+                      <div><strong>專業:</strong> {guestDomain}</div>
+                      {guests.find(g => g.name === selectedGuest)?.referrer && (
+                        <div><strong>邀請人:</strong> {guests.find(g => g.name === selectedGuest)?.referrer}</div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Manual mode - type in */}
+              {guestInputMode === "manual" && (
+                <>
+                  <label htmlFor="guest-name" className="form-label">
+                    來賓姓名
+                  </label>
+                  <input
+                    id="guest-name"
+                    type="text"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    placeholder="輸入姓名"
+                    className="form-input"
+                  />
+
+                  <label htmlFor="guest-domain" className="form-label">
+                    專業領域
+                  </label>
+                  <input
+                    id="guest-domain"
+                    type="text"
+                    value={guestDomain}
+                    onChange={(e) => setGuestDomain(e.target.value)}
+                    placeholder="例: 軟體開發、行銷、財務"
+                    className="form-input"
+                  />
+                </>
+              )}
 
               <button
                 type="button"
                 className="button button-primary full-width"
                 onClick={handleGuestSubmit}
                 disabled={!isGuestFormValid || isSubmitting || isEventEnded}
+                style={{ marginTop: '1rem' }}
               >
                 {isSubmitting ? "⏳ 簽到中..." : "✅ 來賓簽到"}
               </button>
@@ -556,8 +639,10 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
             onClick={() => {
               setShowQRScanner(true);
               setSelectedMember("");
+              setSelectedGuest("");
               setGuestName("");
               setGuestDomain("");
+              setGuestInputMode("dropdown");
               setEventInfo(null);
               setLastScanned("");
               setScanStatus("idle");
