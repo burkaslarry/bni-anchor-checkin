@@ -411,7 +411,7 @@ export const QRGeneratorPanel = ({ onNotify }: QRGeneratorPanelProps) => {
 
       <div className="time-fields-grid">
         <div className="form-group">
-          <label htmlFor="registration-start-input">登記開始時間 Registration Start</label>
+          <label htmlFor="registration-start-input">登記開始時間 Registration Start (24 小時制)</label>
           <input
             id="registration-start-input"
             className="input-field"

@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { useState, useCallback, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { NotificationStack } from "../components/NotificationStack";
 import { NotificationEntry } from "../components/ScanPanel";
 import { QRGeneratorPanel } from "../components/QRGeneratorPanel";
@@ -25,7 +25,7 @@ const navTargets: { id: AdminView; title: string; description: string; icon: str
   },
   {
     id: "generate",
-    title: "產生 QR 碼",
+    title: "新增活動和二維碼",
     description: "產生活動簽到用 QR Code",
     icon: "🔳"
   },
@@ -47,8 +47,19 @@ const createNotificationId = () =>
   crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
 
 export default function AdminPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeView, setActiveView] = useState<AdminView>("home");
   const [notifications, setNotifications] = useState<NotificationEntry[]>([]);
+
+  // Handle URL parameter for direct navigation
+  useEffect(() => {
+    const viewParam = searchParams.get("view");
+    if (viewParam && ["generate", "records", "manual", "event", "strategic"].includes(viewParam)) {
+      setActiveView(viewParam as AdminView);
+      // Clear the URL parameter after navigating
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const pushNotification = useCallback((note: NotificationEntry) => {
     setNotifications((current) => [...current, note]);

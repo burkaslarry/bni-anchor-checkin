@@ -3,8 +3,9 @@
 > vite
 
 
-  VITE v7.2.2  ready in 216 ms
+  VITE v7.2.2  ready in 118 ms
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+1:04:00 PM [vite] (client) hmr update /src/components/AdminManualEntryPanel.tsx

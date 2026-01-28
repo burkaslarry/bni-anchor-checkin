@@ -210,7 +210,7 @@ export default function ReportPage() {
           <h2>尚未建立活動</h2>
           <p>請先在管理頁面建立今日活動</p>
           <button 
-            onClick={() => navigate("/admin")} 
+            onClick={() => navigate("/admin?view=generate")} 
             className="go-admin-button"
           >
             🔧 前往管理頁面建立活動

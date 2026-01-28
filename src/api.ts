@@ -96,6 +96,19 @@ export async function getMembers(): Promise<{ members: MemberInfo[] }> {
   return handleResponse(response);
 }
 
+// Guest info type
+export type GuestInfo = {
+  name: string;
+  profession: string;
+  referrer: string;
+};
+
+// Get list of pre-registered guests
+export async function getGuests(): Promise<{ guests: GuestInfo[] }> {
+  const response = await fetch(`${API_BASE}/api/guests`, { mode: "cors" });
+  return handleResponse(response);
+}
+
 // Check-in (manual entry)
 export async function checkIn(
   request: CheckInRequest
@@ -296,6 +309,64 @@ export async function exportAIReadyData(
   eventId: number
 ): Promise<Record<string, unknown>> {
   const response = await fetch(`${API_BASE}/api/insights/data-export/${eventId}`, {
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+// ===== Strategic Matching API =====
+
+// Quick match for guest check-in
+export type QuickMatchResult = {
+  matches: string;
+  provider: string;
+};
+
+export async function quickMatch(
+  guestName: string,
+  guestProfession: string
+): Promise<QuickMatchResult> {
+  const response = await fetch(`${API_BASE}/api/matching/quick`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({ guestName, guestProfession }),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+// Batch matching for multiple guests
+export type BatchGuestInfo = {
+  name: string;
+  profession: string;
+  remarks?: string;
+};
+
+export type MatchedMember = {
+  memberName: string;
+  profession: string;
+  matchStrength: string;
+  reason: string;
+};
+
+export type BatchMatchResult = {
+  guestName: string;
+  guestProfession: string;
+  matchedMembers: MatchedMember[];
+};
+
+export type BatchMatchResponse = {
+  results: BatchMatchResult[];
+  provider: string;
+};
+
+export async function batchMatch(
+  guests: BatchGuestInfo[]
+): Promise<BatchMatchResponse> {
+  const response = await fetch(`${API_BASE}/api/matching/batch`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({ guests }),
     mode: "cors"
   });
   return handleResponse(response);
