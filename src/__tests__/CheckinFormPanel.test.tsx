@@ -8,6 +8,7 @@ vi.mock("../api", () => ({
   getMembers: vi.fn().mockResolvedValue({ members: [] }),
   getGuests: vi.fn().mockResolvedValue({ guests: [] }),
   logAttendance: vi.fn().mockResolvedValue({ status: "success", message: "OK" }),
+  getReportWebSocketUrl: vi.fn().mockReturnValue("ws://localhost/ws/report"),
 }));
 
 describe("CheckinFormPanel", () => {

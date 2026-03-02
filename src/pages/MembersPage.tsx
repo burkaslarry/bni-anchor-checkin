@@ -109,8 +109,8 @@ export default function MembersPage({}: MembersPageProps) {
 
       <header className="site-header">
         <div>
-          <p className="hint">BNI Anchor Checkin</p>
-          <h1>👥 會員管理</h1>
+        <p className="hint">EventXP for BNI Anchor</p>
+          <h1>👥 BNI Anchor 會員管理</h1>
           <p className="hint">Member Management</p>
         </div>
         <div className="header-meta">
@@ -123,7 +123,7 @@ export default function MembersPage({}: MembersPageProps) {
       <section className="section">
         <div className="section-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
           <div>
-            <h2>會員列表</h2>
+            <h2>BNI Anchor 會員列表</h2>
             <p className="hint">管理會員資料和狀態（從資料庫載入）</p>
           </div>
           <button

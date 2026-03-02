@@ -62,6 +62,46 @@ function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = FE
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(id));
 }
 
+const RETRY_DELAYS_MS = [0, 1000, 3000];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetriableStatus(status: number): boolean {
+  return status >= 500 || status === 429;
+}
+
+function isRetriableNetworkError(e: unknown): boolean {
+  if (!(e instanceof Error)) return false;
+  return e.name === "AbortError" || e.message.includes("fetch") || e.message.includes("NetworkError");
+}
+
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = FETCH_TIMEOUT_MS,
+  maxAttempts = 3
+): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const delay = RETRY_DELAYS_MS[Math.min(attempt - 1, RETRY_DELAYS_MS.length - 1)] + Math.floor(Math.random() * 300);
+    if (delay > 0) await sleep(delay);
+    try {
+      const response = await fetchWithTimeout(url, options, timeoutMs);
+      if (response.ok || !isRetriableStatus(response.status) || attempt === maxAttempts) {
+        return response;
+      }
+    } catch (e) {
+      lastError = e;
+      if (!isRetriableNetworkError(e) || attempt === maxAttempts) {
+        throw e;
+      }
+    }
+  }
+  throw (lastError instanceof Error ? lastError : new Error("Request failed after retries"));
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const text = await response.text();
@@ -116,7 +156,7 @@ export async function searchEventAttendance(
 // Get list of members with domain info (backend only)
 export async function getMembers(): Promise<{ members: MemberInfo[] }> {
   try {
-    const response = await fetchWithTimeout(`${API_BASE}/api/members`, { mode: "cors" }, 20000);
+    const response = await fetchWithRetry(`${API_BASE}/api/members`, { mode: "cors" }, 12000, 3);
     return handleResponse(response);
   } catch (e) {
     if ((e as Error).name === "AbortError") {
@@ -137,7 +177,7 @@ export type GuestInfo = {
 // Get list of pre-registered guests (backend only)
 export async function getGuests(): Promise<{ guests: GuestInfo[] }> {
   try {
-    const response = await fetchWithTimeout(`${API_BASE}/api/guests`, { mode: "cors" }, 20000);
+    const response = await fetchWithRetry(`${API_BASE}/api/guests`, { mode: "cors" }, 12000, 3);
     return handleResponse(response);
   } catch (e) {
     if ((e as Error).name === "AbortError") {
@@ -363,10 +403,11 @@ export async function checkEventExists(date: string): Promise<boolean> {
 // Get event for date (backend only)
 export async function getEventForDate(date: string): Promise<{ id: number; name: string } | null> {
   try {
-    const response = await fetchWithTimeout(
+    const response = await fetchWithRetry(
       `${API_BASE}/api/events/for-date?date=${encodeURIComponent(date)}`,
       { mode: "cors" },
-      15000
+      10000,
+      3
     );
     if (response.status === 404) {
       return null;
@@ -552,13 +593,13 @@ export async function bulkImport(
       request.type === "member"
         ? `${API_BASE}/api/bulk-import-members`
         : `${API_BASE}/api/bulk-import-guest`;
-    const response = await fetchWithTimeout(endpoint, {
+    const response = await fetchWithRetry(endpoint, {
       method: "POST",
       headers: jsonHeaders,
       // Dedicated endpoints accept List<ImportRecord>
       body: JSON.stringify(request.records),
       mode: "cors"
-    });
+    }, 15000, 3);
     return handleResponse(response);
   } catch (e) {
     if ((e as Error).name === "AbortError") {

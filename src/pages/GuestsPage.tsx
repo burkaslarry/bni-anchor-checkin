@@ -125,8 +125,8 @@ export default function GuestsPage({}: GuestsPageProps) {
 
       <header className="site-header">
         <div>
-          <p className="hint">BNI Anchor Checkin</p>
-          <h1>🎫 嘉賓管理</h1>
+          <p className="hint">EventXP for BNI Anchor</p>
+          <h1>🎫 BNI Anchor 嘉賓管理</h1>
           <p className="hint">Guest Management</p>
         </div>
         <div className="header-meta">

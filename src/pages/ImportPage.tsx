@@ -56,7 +56,7 @@ export default function ImportPage() {
           name: pickValue(row, ["name"]),
           profession: pickValue(row, ["profession", "category"]),
           email: pickValue(row, ["email"]) || "",
-          phone: pickValue(row, ["phone", "phone_number"]),
+          phone: pickValue(row, ["phone"]) || "",
           referrer: pickValue(row, ["referrer"]),
           standing: pickValue(row, ["standing"]),
           eventDate: pickValue(row, ["event_date", "eventdate"])
@@ -206,8 +206,8 @@ export default function ImportPage() {
 
       <header className="site-header">
         <div>
-          <p className="hint">BNI Anchor Checkin</p>
-          <h1>📥 批量匯入</h1>
+        <p className="hint">EventXP for BNI Anchor</p>
+          <h1>📥 批量匯入會員或嘉賓資料</h1>
           <p className="hint">Bulk Import Members & Guests</p>
         </div>
         <div className="header-meta">
