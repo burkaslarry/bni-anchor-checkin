@@ -7,19 +7,32 @@ import { bulkImport, ImportRecord, getEventForDate } from "../api";
 type ImportType = "member" | "guest";
 
 type ImportRow = {
-  Name: string;
-  Company?: string;
-  Category?: string;
-  Profession?: string;
-  Email?: string;
-  Phone?: string;
-  Referrer?: string;
-  Standing?: string;
-  EventDate?: string;
+  name: string;
+  profession: string;
+  email?: string;
+  phone?: string;
+  referrer?: string;
+  standing?: string;
+  eventDate?: string;
+};
+
+const normalizeHeader = (key: string): string =>
+  key.replace(/^\uFEFF/, "").trim().toLowerCase().replace(/[\s-]/g, "_");
+
+const aliasSet = (aliases: string[]) => new Set(aliases.map(normalizeHeader));
+
+const pickValue = (row: Record<string, unknown>, aliases: string[]): string => {
+  const keys = aliasSet(aliases);
+  for (const [k, v] of Object.entries(row)) {
+    if (!keys.has(normalizeHeader(k))) continue;
+    if (v == null) return "";
+    return String(v).trim();
+  }
+  return "";
 };
 
 export default function ImportPage() {
-  const [importType, setImportType] = useState<ImportType>("member");
+  const [importType, setImportType] = useState<ImportType>("guest");
   const [importData, setImportData] = useState<ImportRow[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [isImporting, setIsImporting] = useState(false);
@@ -38,23 +51,29 @@ export default function ImportPage() {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const data = results.data as ImportRow[];
+        const rawData = results.data as Record<string, unknown>[];
+        const data: ImportRow[] = rawData.map((row) => ({
+          name: pickValue(row, ["name"]),
+          profession: pickValue(row, ["profession", "category"]),
+          email: pickValue(row, ["email"]) || "",
+          phone: pickValue(row, ["phone", "phone_number"]),
+          referrer: pickValue(row, ["referrer"]),
+          standing: pickValue(row, ["standing"]),
+          eventDate: pickValue(row, ["event_date", "eventdate"])
+        }));
         const validationErrors: string[] = [];
 
         // Validate data
         data.forEach((row, index) => {
-          if (!row.Name) {
+          if (!row.name) {
             validationErrors.push(`第 ${index + 1} 行：缺少姓名 (Name)`);
           }
-          if (importType === "member" && !row.Category) {
-            validationErrors.push(`第 ${index + 1} 行：缺少專業領域 (Category)`);
-          }
-          if (importType === "guest" && !row.Category && !row.Profession) {
-            validationErrors.push(`第 ${index + 1} 行：缺少專業領域 (Category)`);
+          if (!row.profession) {
+            validationErrors.push(`第 ${index + 1} 行：缺少專業領域 (profession)`);
           }
           
           // Validate email format if provided
-          if (row.Email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.Email)) {
+          if (row.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) {
             validationErrors.push(`第 ${index + 1} 行：無效的電郵格式`);
           }
         });
@@ -94,7 +113,7 @@ export default function ImportPage() {
     try {
       // For guest import: verify event exists for each event date
       if (importType === "guest") {
-        const eventDates = [...new Set(importData.map((r) => (r.EventDate || "").trim()).filter(Boolean))];
+        const eventDates = [...new Set(importData.map((r) => (r.eventDate || "").trim()).filter(Boolean))];
         for (const d of eventDates) {
           if (!d) continue;
           const normalized = d.includes("-") ? d : `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
@@ -107,13 +126,13 @@ export default function ImportPage() {
         }
       }
       const records: ImportRecord[] = importData.map(row => ({
-        name: row.Name,
-        profession: importType === "member" ? (row.Category || "") : (row.Category || row.Profession || ""),
-        email: row.Email || "",
-        phoneNumber: row.Phone || "",
-        referrer: row.Referrer || "",
-        standing: row.Standing || "GREEN",
-        eventDate: row.EventDate || ""
+        name: row.name,
+        profession: row.profession || "",
+        email: row.email || "",
+        phoneNumber: row.phone || "",
+        referrer: row.referrer || "",
+        standing: row.standing || "GREEN",
+        eventDate: row.eventDate || ""
       }));
 
       const result = await bulkImport({
@@ -148,12 +167,12 @@ export default function ImportPage() {
 
   const downloadTemplate = () => {
     const headers = importType === "member"
-      ? "name,profession,position"
+      ? "name,profession"
       : "name,profession,phone,referrer,event_date";
     
     const today = new Date().toISOString().split("T")[0];
     const sampleRow = importType === "member"
-      ? "\nJohn Doe,Software Development,Member"
+      ? "\nJohn Doe,Software Development"
       : `\nJane Smith,Marketing Consultant,87654321,Larry Lo,${today}`;
     
     const csvContent = headers + sampleRow;
@@ -264,8 +283,8 @@ export default function ImportPage() {
           </button>
           <p className="hint" style={{ textAlign: "center" }}>
             {importType === "member" 
-              ? "會員範本包含：Name, Category, Email, Phone, Standing" 
-              : "嘉賓範本包含：Name, Category, Phone, Referrer, EventDate"}
+              ? "會員範本包含：name, profession" 
+              : "嘉賓範本包含：name, profession, phone, referrer, event_date"}
           </p>
         </div>
 
@@ -346,18 +365,16 @@ export default function ImportPage() {
                   {importData.slice(0, 10).map((row, index) => (
                     <tr key={index} style={{ borderBottom: "1px solid var(--border-color)" }}>
                       <td style={{ padding: "0.5rem" }}>{index + 1}</td>
-                      <td style={{ padding: "0.5rem" }}>{row.Name}</td>
-                      <td style={{ padding: "0.5rem" }}>
-                        {importType === "member" ? row.Category : (row.Category || row.Profession)}
-                      </td>
+                      <td style={{ padding: "0.5rem" }}>{row.name}</td>
+                      <td style={{ padding: "0.5rem" }}>{row.profession}</td>
                       {importType === "guest" && (
                         <>
-                          <td style={{ padding: "0.5rem" }}>{row.Referrer || "-"}</td>
-                          <td style={{ padding: "0.5rem" }}>{row.EventDate || "-"}</td>
+                          <td style={{ padding: "0.5rem" }}>{row.referrer || "-"}</td>
+                          <td style={{ padding: "0.5rem" }}>{row.eventDate || "-"}</td>
                         </>
                       )}
                       {importType === "member" && (
-                        <td style={{ padding: "0.5rem" }}>{row.Standing || "GREEN"}</td>
+                        <td style={{ padding: "0.5rem" }}>{row.standing || "GREEN"}</td>
                       )}
                     </tr>
                   ))}

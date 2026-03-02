@@ -399,6 +399,7 @@ export async function logAttendance(
   attendeeId: number | null,
   attendeeType: string,
   attendeeName: string,
+  attendeeProfession: string,
   eventDate: string,
   checkedInAt: string,
   status: string
@@ -410,6 +411,7 @@ export async function logAttendance(
       attendeeId,
       attendeeType,
       attendeeName,
+      attendeeProfession,
       eventDate,
       checkedInAt,
       status

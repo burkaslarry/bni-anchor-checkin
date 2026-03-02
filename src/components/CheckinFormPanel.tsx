@@ -174,10 +174,15 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
     const status = "on-time";
 
     try {
+      const selected =
+        checkinType === "member"
+          ? members.find((m) => m.id === selectedId)
+          : guests.find((g) => g.id === selectedId);
       await logAttendance(
         selectedId,
         checkinType,
         selectedName,
+        selected?.profession ?? "",
         eventDate,
         now.toISOString(),
         status
