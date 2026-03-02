@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { checkIn, getMembers, getGuests, MemberInfo, GuestInfo, AttendeeRole } from "../api";
+import { checkIn, getMembers, getGuests, MemberInfo, GuestInfo, AttendeeRole, checkEventThisWeek } from "../api";
 
 type AdminManualEntryPanelProps = {
   onNotify: (message: string, type: "success" | "error" | "info") => void;
@@ -42,6 +42,16 @@ export const AdminManualEntryPanel = ({ onNotify }: AdminManualEntryPanelProps) 
   // Batch check-in state
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
   const [batchSubmitting, setBatchSubmitting] = useState(false);
+
+  // Event check - must have event this week
+  const [noEventThisWeek, setNoEventThisWeek] = useState(false);
+
+  // Check if event exists this week
+  useEffect(() => {
+    checkEventThisWeek().then((exists) => {
+      setNoEventThisWeek(!exists);
+    });
+  }, []);
 
   // Fetch members and guests list
   useEffect(() => {
@@ -211,6 +221,31 @@ export const AdminManualEntryPanel = ({ onNotify }: AdminManualEntryPanelProps) 
       onNotify(`⚠️ 批量簽到完成：成功 ${successCount} 位，失敗 ${failCount} 位`, "info");
     }
   };
+
+  if (noEventThisWeek) {
+    return (
+      <section className="section manual-entry-panel">
+        <div
+          style={{
+            background: "#fef2f2",
+            border: "2px solid #ef4444",
+            borderRadius: "12px",
+            padding: "2rem",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>⚠️</div>
+          <h3 style={{ margin: "0 0 0.5rem 0", color: "#b91c1c" }}>本週尚未建立活動</h3>
+          <p style={{ margin: "0 0 1rem 0", color: "#991b1b" }}>
+            請主辦單位先在管理頁面建立本週活動後，再進行手動簽到。
+          </p>
+          <p style={{ margin: 0, fontSize: "0.9rem", color: "#7f1d1d" }}>
+            Please ask the organizer to create the event first.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="section manual-entry-panel">

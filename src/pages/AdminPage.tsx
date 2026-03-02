@@ -118,6 +118,9 @@ export default function AdminPage() {
           <p className="hint">Admin Dashboard</p>
         </div>
         <div className="header-meta">
+          <Link to="/report" className="ghost-button" style={{ marginRight: "0.5rem" }}>
+            📊 即時報告
+          </Link>
           <Link to="/admin" className="ghost-button back-home-btn">
             ← 返回首頁
           </Link>
@@ -143,6 +146,25 @@ export default function AdminPage() {
                 <span className="hint">{item.description}</span>
               </button>
             ))}
+            
+            {/* External Links to New Pages */}
+            <Link to="/admin/members" className="nav-card" style={{ textDecoration: 'none' }}>
+              <span className="nav-icon">👥</span>
+              <strong className="nav-title">會員管理</strong>
+              <span className="hint">管理會員資料和狀態</span>
+            </Link>
+            
+            <Link to="/admin/guests" className="nav-card" style={{ textDecoration: 'none' }}>
+              <span className="nav-icon">🎫</span>
+              <strong className="nav-title">嘉賓管理</strong>
+              <span className="hint">管理嘉賓資料</span>
+            </Link>
+            
+            <Link to="/admin/import" className="nav-card" style={{ textDecoration: 'none' }}>
+              <span className="nav-icon">📥</span>
+              <strong className="nav-title">批量匯入</strong>
+              <span className="hint">CSV 批量新增會員/嘉賓</span>
+            </Link>
           </div>
         </section>
       )}

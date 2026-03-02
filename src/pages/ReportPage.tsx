@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { getReportData, getReportWebSocketUrl, ReportData, ReportAttendance, AttendeeRole } from "../api";
 
 type FilterType = "all" | "members" | "guests" | "vip";
@@ -19,20 +19,32 @@ export default function ReportPage() {
   const fetchReportData = useCallback(async () => {
     try {
       const data = await getReportData();
+      if (!data) {
+        setNoEvent(true);
+        setError(null);
+        setLoading(false);
+        return;
+      }
       setReportData(data);
       setLastUpdated(new Date());
       setError(null);
       setNoEvent(false);
+      setLoading(false);
     } catch (err) {
-      console.log("fetch report data error");
-      console.log(err);
-      if (err instanceof Error && err.message.includes("404")) {
-        setNoEvent(true);
-        setError(null);
+      console.error("Report fetch error:", err);
+      
+      // Check if it's a 404 (no event created)
+      if (err instanceof Error) {
+        if (err.message.includes("404") || err.message.includes("Not Found")) {
+          setNoEvent(true);
+          setError(null);
+        } else {
+          setError(err.message);
+          setNoEvent(false);
+        }
       } else {
         setNoEvent(true);
       }
-    } finally {
       setLoading(false);
     }
   }, []);
@@ -209,12 +221,16 @@ export default function ReportPage() {
           <div className="no-event-icon">📅</div>
           <h2>尚未建立活動</h2>
           <p>請先在管理頁面建立今日活動</p>
-          <button 
-            onClick={() => navigate("/admin?view=generate")} 
-            className="go-admin-button"
-          >
-            🔧 前往管理頁面建立活動
-          </button>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "center", marginTop: "1rem" }}>
+            <button 
+              onClick={() => navigate("/admin?view=generate")} 
+              className="go-admin-button"
+            >
+              🔧 前往管理頁面建立活動
+            </button>
+            <Link to="/" className="ghost-button">📱 返回簽到頁</Link>
+            <Link to="/admin" className="ghost-button">🛠️ 管理後台</Link>
+          </div>
         </div>
       </div>
     );
@@ -226,9 +242,13 @@ export default function ReportPage() {
         <div className="error-container">
           <div className="error-icon">⚠️</div>
           <p>{error}</p>
-          <button onClick={fetchReportData} className="retry-button">
-            重試
-          </button>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "center", marginTop: "1rem" }}>
+            <button onClick={fetchReportData} className="retry-button">
+              重試
+            </button>
+            <Link to="/" className="ghost-button">📱 簽到頁</Link>
+            <Link to="/admin" className="ghost-button">🛠️ 管理後台</Link>
+          </div>
         </div>
       </div>
     );
@@ -238,9 +258,13 @@ export default function ReportPage() {
     <div className="report-page">
       <header className="report-header">
         <div className="header-content">
-          <h1>📊 即時簽到狀態</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+            <h1 style={{ margin: 0 }}>📊 即時簽到狀態</h1>
+            <Link to="/" className="ghost-button" style={{ fontSize: "0.9rem" }}>📱 簽到頁</Link>
+            <Link to="/admin" className="ghost-button" style={{ fontSize: "0.9rem" }}>🛠️ 管理後台</Link>
+          </div>
           {reportData && (
-            <div className="event-info">
+            <div className="event-info" style={{ marginTop: "0.5rem" }}>
               <span className="event-name">{reportData.eventName}</span>
               <span className="event-date">{reportData.eventDate}</span>
             </div>
@@ -409,8 +433,45 @@ export default function ReportPage() {
             </>
           )}
         </div>
-        <div className="auto-refresh-note">
-          自動每 10 秒更新 | WebSocket 即時同步
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginTop: "0.5rem" }}>
+          <div className="auto-refresh-note">
+            自動每 10 秒更新 | WebSocket 即時同步
+          </div>
+          <button
+            className="button"
+            onClick={() => {
+              if (!reportData) return;
+              const csv = [
+                "\ufeff姓名,狀態,簽到時間,角色",
+                ...reportData.attendees.map((a) =>
+                  [
+                    `"${(a.memberName || "").replace(/"/g, '""')}"`,
+                    a.status || "on-time",
+                    a.checkInTime || "",
+                    a.role || "MEMBER"
+                  ].join(",")
+                ),
+                ...reportData.absentees.map((a) =>
+                  [
+                    `"${(a.memberName || "").replace(/"/g, '""')}"`,
+                    "absent",
+                    "",
+                    a.role || "MEMBER"
+                  ].join(",")
+                )
+              ].join("\n");
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = `attendance_${reportData.eventDate}_${formatDate().replace(/\//g, "-")}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+            }}
+            style={{ background: "#22c55e" }}
+          >
+            📥 匯出 CSV
+          </button>
         </div>
       </footer>
     </div>

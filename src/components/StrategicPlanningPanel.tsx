@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { Guest, Member, MatchResult } from "../types/seating";
-import { matchGuestWithMembers } from "../lib/assignGuestToTable";
+import type { Guest, Member, MatchResult, MemberMatch } from "../types/seating";
 import { sampleGuests } from "../lib/sampleData";
 import { getMembers, batchMatch, BatchGuestInfo, BatchMatchResult } from "../api";
 
@@ -98,12 +97,41 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
     setIsMatching(true);
     setCurrentGuest(guest);
     try {
-      const result = await matchGuestWithMembers(guest, members);
+      // Use batchMatch API (same as 批量配對) - calls DeepSeek
+      const response = await batchMatch([{
+        name: guest.name,
+        profession: guest.profession,
+        remarks: guest.remarks
+      }]);
+      const batchResult = response.results[0];
+      if (!batchResult) {
+        throw new Error("No match result returned");
+      }
+      const recommendedMembers: MemberMatch[] = batchResult.matchedMembers.map((m) => ({
+        member: {
+          id: `member-${m.memberName}`,
+          name: m.memberName,
+          profession: m.profession
+        },
+        matchStrength: (m.matchStrength as "High" | "Medium" | "Low") || "Low",
+        reason: m.reason
+      }));
+      const highCount = recommendedMembers.filter((m) => m.matchStrength === "High").length;
+      const mediumCount = recommendedMembers.filter((m) => m.matchStrength === "Medium").length;
+      let overallMatchStrength: "High" | "Medium" | "Low" = "Low";
+      if (highCount >= 2) overallMatchStrength = "High";
+      else if (highCount >= 1 || mediumCount >= 3) overallMatchStrength = "Medium";
+      const result: MatchResult & { provider?: "deepseek" | "gemini" | "keyword" | null } = {
+        matchStrength: overallMatchStrength,
+        matchNote: `${response.provider === "deepseek" ? "🤖 DeepSeek AI" : "🤖 AI"}: 找到 ${recommendedMembers.length} 位推薦會員`,
+        recommendedMembers,
+        provider: response.provider === "deepseek" ? "deepseek" : "keyword"
+      };
       setMatchResult(result);
-      onNotify(
-        `配對完成！${result.provider === "keyword" ? "使用關鍵字配對" : `使用 ${result.provider?.toUpperCase()} AI 配對`}`,
-        "success"
-      );
+      onNotify(`配對完成！使用 ${response.provider?.toUpperCase()} AI 配對。CSV 已下載`, "success");
+      // Auto-download CSV (batching_single-{name}.csv), stay on page
+      const safeName = guest.name.replace(/[/\\?%*:|"<>]/g, "_");
+      exportBatchResultsCsvFromResults([batchResult], `batching_single-${safeName}.csv`);
     } catch (error) {
       onNotify(
         "配對失敗: " + (error instanceof Error ? error.message : "未知錯誤"),
@@ -232,7 +260,8 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
   };
 
   // Export function that takes results as parameter (for auto-export)
-  const exportBatchResultsCsvFromResults = (results: BatchMatchResult[]) => {
+  // Optional filename: e.g. "batching_single-張三.csv" for single guest
+  const exportBatchResultsCsvFromResults = (results: BatchMatchResult[], customFilename?: string) => {
     const csvLines: string[] = [];
     csvLines.push("姓名(Name),專業領域(Profession),可配對會友,理由");
 
@@ -275,7 +304,7 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `batch_matching_results_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = customFilename ?? `batch_matching_results_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -808,13 +837,6 @@ export const StrategicPlanningPanel = ({ onNotify, eventId }: StrategicPlanningP
         <p className="hint">
           請在專案根目錄建立 <code>.env.local</code> 檔案並添加以下環境變數：
         </p>
-        <div className="config-example">
-          <code>
-            VITE_DEEPSEEK_API_KEY=your_deepseek_key<br />
-            VITE_DEEPSEEK_MODEL=deepseek-v3<br />
-            VITE_GEMINI_API_KEY=your_gemini_key
-          </code>
-        </div>
         <p className="hint">
           系統會優先使用 DeepSeek AI，失敗時自動切換至 Gemini，兩者都失敗則使用關鍵字匹配。
         </p>

@@ -32,15 +32,23 @@ export type CheckInRequest = {
   role?: AttendeeRole;
   tags?: string[];
   referrer?: string;
+  standing?: MemberStanding;
 };
+
+export type MemberStanding = "GREEN" | "YELLOW" | "RED" | "BLACK";
 
 export type MemberInfo = {
+  id?: number;
   name: string;
   domain: string;
+  standing?: MemberStanding;
+  professionGroupName?: string; // from bni_anchor_profession_groups join
 };
 
-// Kotlin backend running on port 10000
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:10000";
+// Backend API: in dev uses Vite proxy (''), in prod uses VITE_API_BASE
+const API_BASE = import.meta.env.DEV
+  ? ""
+  : ((import.meta.env.VITE_API_BASE as string) || "http://localhost:10000");
 
 const jsonHeaders = {
   "Content-Type": "application/json"
@@ -49,9 +57,16 @@ const jsonHeaders = {
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(
-      text || "Attendance service returned an unexpected response."
-    );
+    let msg = `後端回傳錯誤 (${response.status})`;
+    if (text) {
+      try {
+        const json = JSON.parse(text) as { message?: string; error?: string };
+        msg = json.message ?? json.error ?? text;
+      } catch {
+        msg = text.length > 200 ? text.slice(0, 200) + "..." : text || msg;
+      }
+    }
+    throw new Error(msg);
   }
   return response.json();
 }
@@ -90,7 +105,7 @@ export async function searchEventAttendance(
   return handleResponse(response);
 }
 
-// Get list of members with domain info
+// Get list of members with domain info (backend only)
 export async function getMembers(): Promise<{ members: MemberInfo[] }> {
   const response = await fetch(`${API_BASE}/api/members`, { mode: "cors" });
   return handleResponse(response);
@@ -101,9 +116,10 @@ export type GuestInfo = {
   name: string;
   profession: string;
   referrer: string;
+  eventDate?: string;
 };
 
-// Get list of pre-registered guests
+// Get list of pre-registered guests (backend only)
 export async function getGuests(): Promise<{ guests: GuestInfo[] }> {
   const response = await fetch(`${API_BASE}/api/guests`, { mode: "cors" });
   return handleResponse(response);
@@ -155,7 +171,19 @@ export async function exportRecords(): Promise<Blob> {
   return response.blob();
 }
 
-// Create event with time settings
+// Helper: convert "Failed to fetch" / network errors to a clearer message
+function wrapNetworkError(e: unknown, fallback: string): never {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (msg === "Failed to fetch" || msg.includes("fetch") || msg.includes("NetworkError")) {
+    throw new Error(
+      "無法連接後端服務。請確認：(1) 後端已啟動 (執行 ./run.sh 或 cd bni-anchor-checkin-backend && ./gradlew bootRun) (2) VITE_API_BASE 設定正確"
+    );
+  }
+  throw e instanceof Error ? e : new Error(fallback);
+}
+
+// Create event with time settings (backend only).
+// Times must be HH:mm or HH:mm:ss; date must be YYYY-MM-DD.
 export async function createEvent(
   name: string,
   date: string,
@@ -163,21 +191,32 @@ export async function createEvent(
   endTime: string,
   registrationStartTime: string,
   onTimeCutoff: string
-): Promise<{ status: string; message: string }> {
-  const response = await fetch(`${API_BASE}/api/events`, {
-    method: "POST",
-    headers: jsonHeaders,
-    body: JSON.stringify({ 
-      name, 
-      date, 
-      startTime, 
-      endTime, 
-      registrationStartTime,
-      onTimeCutoff 
-    }),
-    mode: "cors"
-  });
-  return handleResponse(response);
+): Promise<{ status: string; message: string; event?: unknown }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/events`, {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({
+        name,
+        date,
+        registrationStartTime: registrationStartTime || "06:30",
+        startTime: startTime || "07:00",
+        onTimeCutoff: onTimeCutoff || "07:05",
+        endTime: endTime || "09:00",
+        createdAt: new Date().toISOString()
+      }),
+      mode: "cors"
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg = (data as { message?: string }).message ?? `HTTP ${response.status}`;
+      if (import.meta.env.DEV) console.error("Create event failed:", response.status, data);
+      throw new Error(msg);
+    }
+    return data as { status: string; message: string; event?: unknown };
+  } catch (e) {
+    wrapNetworkError(e, "建立活動失敗");
+  }
 }
 
 // Delete all events and attendance records
@@ -269,11 +308,85 @@ export type AIInsightResponse = {
   recommendations: string[];
 };
 
-// Get report data for the current/latest event
-export async function getReportData(): Promise<ReportData> {
+// Get report data for the current/latest event (backend only)
+export async function getReportData(): Promise<ReportData | null> {
   const response = await fetch(`${API_BASE}/api/report`, { mode: "cors" });
-  console.log("report data response");
-  console.log(response);
+  if (response.ok) {
+    return handleResponse(response);
+  }
+  if (response.status === 404) {
+    return null;
+  }
+  const text = await response.text();
+  let msg = `無法載入報告 (${response.status})`;
+  try {
+    const json = JSON.parse(text) as { message?: string };
+    if (json.message) msg = json.message;
+  } catch {
+    if (text) msg = text.slice(0, 200);
+  }
+  throw new Error(msg);
+}
+
+// Check if event exists for a date (backend only)
+export async function checkEventExists(date: string): Promise<boolean> {
+  const response = await fetch(`${API_BASE}/api/events/check?date=${encodeURIComponent(date)}`, { mode: "cors" });
+  if (response.ok) {
+    const data = await response.json();
+    return !!data?.exists;
+  }
+  return false;
+}
+
+// Get event for date (backend only)
+export async function getEventForDate(date: string): Promise<{ id: number; name: string } | null> {
+  try {
+    const response = await fetch(`${API_BASE}/api/events/for-date?date=${encodeURIComponent(date)}`, { mode: "cors" });
+    if (response.status === 404) {
+      return null;
+    }
+    return handleResponse(response);
+  } catch {
+    return null;
+  }
+}
+
+// Check if event exists this week (backend only)
+export async function checkEventThisWeek(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE}/api/events/check-this-week`, { mode: "cors" });
+    if (response.ok) {
+      const data = await response.json();
+      return !!data?.exists;
+    }
+  } catch {
+    // Return false if backend is unreachable
+  }
+  return false;
+}
+
+// Log attendance directly (backend only)
+export async function logAttendance(
+  attendeeId: number | null,
+  attendeeType: string,
+  attendeeName: string,
+  eventDate: string,
+  checkedInAt: string,
+  status: string
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/attendance/log`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({
+      attendeeId,
+      attendeeType,
+      attendeeName,
+      eventDate,
+      checkedInAt,
+      status
+    }),
+    mode: "cors"
+  });
   return handleResponse(response);
 }
 
@@ -367,6 +480,105 @@ export async function batchMatch(
     method: "POST",
     headers: jsonHeaders,
     body: JSON.stringify({ guests }),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+// ===== Bulk Import API =====
+
+export type ImportRecord = {
+  name: string;
+  profession: string;
+  email?: string;
+  phoneNumber?: string;
+  referrer?: string;
+  standing?: string;
+  professionCode?: string;
+  position?: string;
+  membershipId?: string;
+  eventDate?: string;
+};
+
+export type BulkImportRequest = {
+  type: "member" | "guest";
+  records: ImportRecord[];
+};
+
+export type ImportResult = {
+  total: number;
+  inserted: number;
+  updated: number;
+  failed: number;
+  errors: string[];
+};
+
+export async function bulkImport(
+  request: BulkImportRequest
+): Promise<ImportResult> {
+  const response = await fetch(`${API_BASE}/api/bulk-import`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify(request),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+// ===== Member Management API =====
+
+export type UpdateMemberRequest = {
+  profession?: string;
+  standing?: string;
+};
+
+export async function updateMember(
+  name: string,
+  request: UpdateMemberRequest
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/members/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    headers: jsonHeaders,
+    body: JSON.stringify(request),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+export type UpdateGuestRequest = {
+  profession?: string;
+  referrer?: string;
+  eventDate?: string;
+};
+
+export async function updateGuest(
+  name: string,
+  request: UpdateGuestRequest
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/guests/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    headers: jsonHeaders,
+    body: JSON.stringify(request),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+export async function deleteMember(
+  name: string
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/members/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+export async function deleteGuest(
+  name: string
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/guests/${encodeURIComponent(name)}`, {
+    method: "DELETE",
     mode: "cors"
   });
   return handleResponse(response);

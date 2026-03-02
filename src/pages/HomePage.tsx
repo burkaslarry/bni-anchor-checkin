@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { NotificationEntry } from "../components/ScanPanel";
 import { NotificationStack } from "../components/NotificationStack";
 import { CheckinFormPanel } from "../components/CheckinFormPanel";
@@ -94,6 +95,9 @@ export default function HomePage() {
           <span className={`connection-pill ${isOnline ? "online" : "offline"}`}>
             {isOnline ? "線上" : "離線"}
           </span>
+          <Link to="/report" className="ghost-button" style={{ textDecoration: "none" }}>
+            📊 即時報告
+          </Link>
           {installPrompt && (
             <button className="ghost-button install-cta" type="button" onClick={handleInstall}>
               新增到首頁
