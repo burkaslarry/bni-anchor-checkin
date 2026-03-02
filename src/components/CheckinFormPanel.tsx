@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { getEventForDate, getMembers, getGuests, logAttendance } from "../api";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { getEventForDate, getMembers, getGuests, logAttendance, getReportWebSocketUrl } from "../api";
 
 type CheckinType = "member" | "guest";
 
@@ -34,6 +34,8 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
   const [checkInSuccess, setCheckInSuccess] = useState(false);
   const [alreadyCheckedIn, setAlreadyCheckedIn] = useState(false);
   const [noEventForDate, setNoEventForDate] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
 
   // Read event date from URL param (?event=2026-03-05)
   const eventDate = useMemo(() => {
@@ -106,6 +108,35 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
     setSearchQuery("");
     setCheckInSuccess(false);
     setAlreadyCheckedIn(false);
+  }, [checkinType, eventDate]);
+
+  // Poll every 30 seconds
+  useEffect(() => {
+    const refresh = () => {
+      if (checkinType === "member") fetchMembers();
+      else fetchGuests();
+    };
+    const id = window.setInterval(refresh, 30000);
+    return () => clearInterval(id);
+  }, [checkinType, eventDate]);
+
+  // WebSocket for real-time sync
+  useEffect(() => {
+    const ws = new WebSocket(getReportWebSocketUrl());
+    ws.onopen = () => setWsConnected(true);
+    ws.onclose = () => setWsConnected(false);
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === "attendance_updated" || msg.type === "event_created") {
+          getEventForDate(eventDate).then((event) => setNoEventForDate(!event));
+          if (checkinType === "member") fetchMembers();
+          else fetchGuests();
+        }
+      } catch (_) {}
+    };
+    wsRef.current = ws;
+    return () => ws.close();
   }, [checkinType, eventDate]);
 
   // Filter list by search query
@@ -591,13 +622,18 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
         </div>
       )}
 
-      {/* Count bar */}
+      {/* Count bar + status */}
       {!checkInSuccess && !alreadyCheckedIn && (
-        <p className="hint" style={{ textAlign: "center", marginTop: "0.5rem" }}>
-          {isLoading
-            ? "載入中..."
-            : `顯示 ${filteredList.length} / ${checkinType === "member" ? members.length : guests.length} 位${checkinType === "member" ? "會員" : "嘉賓"}`}
-        </p>
+        <div style={{ textAlign: "center", marginTop: "0.5rem" }}>
+          <p className="hint">
+            {isLoading
+              ? "載入中..."
+              : `顯示 ${filteredList.length} / ${checkinType === "member" ? members.length : guests.length} 位${checkinType === "member" ? "會員" : "嘉賓"}`}
+          </p>
+          <p className="hint" style={{ fontSize: "0.8rem", marginTop: "0.25rem", opacity: 0.8 }}>
+            自動每 30 秒更新 | WebSocket 即時同步{wsConnected ? "" : " (重新連線中...)"}
+          </p>
+        </div>
       )}
     </section>
   );

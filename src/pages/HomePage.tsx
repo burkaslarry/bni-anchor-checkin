@@ -87,9 +87,9 @@ export default function HomePage() {
       <NotificationStack notifications={notifications} />
       <header className="site-header">
         <div>
-          <p className="hint">BNI Anchor 簽到系統</p>
-          <h1>📱 QR 碼簽到</h1>
-          <p className="hint">掃描 QR 碼快速簽到，支援離線模式</p>
+          <p className="hint">EventXP for BNI Anchor</p>
+          <h1>📱 活動簽到</h1>
+          <p className="hint">掃描 QR 碼快速簽到</p>
         </div>
         <div className="header-meta">
           <span className={`connection-pill ${isOnline ? "online" : "offline"}`}>

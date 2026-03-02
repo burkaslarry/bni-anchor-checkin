@@ -54,6 +54,14 @@ const jsonHeaders = {
   "Content-Type": "application/json"
 };
 
+const FETCH_TIMEOUT_MS = 25000;
+
+function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const text = await response.text();
@@ -107,8 +115,15 @@ export async function searchEventAttendance(
 
 // Get list of members with domain info (backend only)
 export async function getMembers(): Promise<{ members: MemberInfo[] }> {
-  const response = await fetch(`${API_BASE}/api/members`, { mode: "cors" });
-  return handleResponse(response);
+  try {
+    const response = await fetchWithTimeout(`${API_BASE}/api/members`, { mode: "cors" }, 20000);
+    return handleResponse(response);
+  } catch (e) {
+    if ((e as Error).name === "AbortError") {
+      throw new Error("連線逾時，請確認後端已啟動並重試");
+    }
+    throw e;
+  }
 }
 
 // Guest info type
@@ -121,8 +136,15 @@ export type GuestInfo = {
 
 // Get list of pre-registered guests (backend only)
 export async function getGuests(): Promise<{ guests: GuestInfo[] }> {
-  const response = await fetch(`${API_BASE}/api/guests`, { mode: "cors" });
-  return handleResponse(response);
+  try {
+    const response = await fetchWithTimeout(`${API_BASE}/api/guests`, { mode: "cors" }, 20000);
+    return handleResponse(response);
+  } catch (e) {
+    if ((e as Error).name === "AbortError") {
+      throw new Error("連線逾時，請確認後端已啟動並重試");
+    }
+    throw e;
+  }
 }
 
 // Check-in (manual entry)
@@ -341,12 +363,19 @@ export async function checkEventExists(date: string): Promise<boolean> {
 // Get event for date (backend only)
 export async function getEventForDate(date: string): Promise<{ id: number; name: string } | null> {
   try {
-    const response = await fetch(`${API_BASE}/api/events/for-date?date=${encodeURIComponent(date)}`, { mode: "cors" });
+    const response = await fetchWithTimeout(
+      `${API_BASE}/api/events/for-date?date=${encodeURIComponent(date)}`,
+      { mode: "cors" },
+      15000
+    );
     if (response.status === 404) {
       return null;
     }
     return handleResponse(response);
-  } catch {
+  } catch (e) {
+    if ((e as Error).name === "AbortError") {
+      throw new Error("連線逾時，請確認後端已啟動並重試");
+    }
     return null;
   }
 }
@@ -516,13 +545,25 @@ export type ImportResult = {
 export async function bulkImport(
   request: BulkImportRequest
 ): Promise<ImportResult> {
-  const response = await fetch(`${API_BASE}/api/bulk-import`, {
-    method: "POST",
-    headers: jsonHeaders,
-    body: JSON.stringify(request),
-    mode: "cors"
-  });
-  return handleResponse(response);
+  try {
+    const endpoint =
+      request.type === "member"
+        ? `${API_BASE}/api/bulk-import-members`
+        : `${API_BASE}/api/bulk-import-guest`;
+    const response = await fetchWithTimeout(endpoint, {
+      method: "POST",
+      headers: jsonHeaders,
+      // Dedicated endpoints accept List<ImportRecord>
+      body: JSON.stringify(request.records),
+      mode: "cors"
+    });
+    return handleResponse(response);
+  } catch (e) {
+    if ((e as Error).name === "AbortError") {
+      throw new Error("連線逾時，請確認後端已啟動並重試");
+    }
+    throw e;
+  }
 }
 
 // ===== Member Management API =====

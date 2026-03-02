@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { getReportData, getReportWebSocketUrl, ReportData, ReportAttendance, AttendeeRole } from "../api";
+import { getReportData, getReportWebSocketUrl, exportRecords, ReportData, ReportAttendance, AttendeeRole } from "../api";
 
 type FilterType = "all" | "members" | "guests" | "vip";
 
@@ -13,6 +13,7 @@ export default function ReportPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [exporting, setExporting] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const pollIntervalRef = useRef<number | null>(null);
 
@@ -262,6 +263,32 @@ export default function ReportPage() {
             <h1 style={{ margin: 0 }}>📊 即時簽到狀態</h1>
             <Link to="/" className="ghost-button" style={{ fontSize: "0.9rem" }}>📱 簽到頁</Link>
             <Link to="/admin" className="ghost-button" style={{ fontSize: "0.9rem" }}>🛠️ 管理後台</Link>
+            {reportData && (
+              <button
+                className="button"
+                disabled={exporting}
+                onClick={async () => {
+                  if (!reportData) return;
+                  setExporting(true);
+                  try {
+                    const blob = await exportRecords();
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = `attendance_${reportData.eventDate}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  } catch (e) {
+                    console.error("Export failed:", e);
+                  } finally {
+                    setExporting(false);
+                  }
+                }}
+                style={{ background: "#22c55e", fontSize: "0.9rem" }}
+              >
+                {exporting ? "匯出中..." : "📥 匯出 CSV"}
+              </button>
+            )}
           </div>
           {reportData && (
             <div className="event-info" style={{ marginTop: "0.5rem" }}>
@@ -433,45 +460,8 @@ export default function ReportPage() {
             </>
           )}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginTop: "0.5rem" }}>
-          <div className="auto-refresh-note">
-            自動每 10 秒更新 | WebSocket 即時同步
-          </div>
-          <button
-            className="button"
-            onClick={() => {
-              if (!reportData) return;
-              const csv = [
-                "\ufeff姓名,狀態,簽到時間,角色",
-                ...reportData.attendees.map((a) =>
-                  [
-                    `"${(a.memberName || "").replace(/"/g, '""')}"`,
-                    a.status || "on-time",
-                    a.checkInTime || "",
-                    a.role || "MEMBER"
-                  ].join(",")
-                ),
-                ...reportData.absentees.map((a) =>
-                  [
-                    `"${(a.memberName || "").replace(/"/g, '""')}"`,
-                    "absent",
-                    "",
-                    a.role || "MEMBER"
-                  ].join(",")
-                )
-              ].join("\n");
-              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement("a");
-              link.href = url;
-              link.download = `attendance_${reportData.eventDate}_${formatDate().replace(/\//g, "-")}.csv`;
-              link.click();
-              URL.revokeObjectURL(url);
-            }}
-            style={{ background: "#22c55e" }}
-          >
-            📥 匯出 CSV
-          </button>
+        <div className="auto-refresh-note" style={{ marginTop: "0.5rem" }}>
+          自動每 10 秒更新 | WebSocket 即時同步
         </div>
       </footer>
     </div>
