@@ -27,7 +27,7 @@ describe("CheckinFormPanel", () => {
         <CheckinFormPanel onNotify={() => {}} />
       </BrowserRouter>
     );
-    expect(screen.getByText(/BNI Anchor 簽到/i)).toBeInTheDocument();
+    expect(screen.getByText(/EventXP for BNI Anchor 簽到/i)).toBeInTheDocument();
     expect(screen.getByText(/會員 Member/i)).toBeInTheDocument();
     expect(screen.getByText(/嘉賓 Guest/i)).toBeInTheDocument();
   });

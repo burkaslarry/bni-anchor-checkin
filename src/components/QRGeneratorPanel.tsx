@@ -23,7 +23,7 @@ const addMinutesToTime = (time: string, minutes: number): string => {
 };
 
 export const QRGeneratorPanel = ({ onNotify }: QRGeneratorPanelProps) => {
-  const [eventName, setEventName] = useState("BNI Anchor Meeting");
+  const [eventName, setEventName] = useState("EventXP for BNI Anchor Meeting");
   const [eventDate, setEventDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split("T")[0];
@@ -254,7 +254,7 @@ export const QRGeneratorPanel = ({ onNotify }: QRGeneratorPanelProps) => {
         month: "long",
         day: "numeric"
       });
-      const message = `🎯 BNI Anchor Event Check-in\n\n` +
+      const message = `🎯 EventXP for BNI Anchor Event Check-in\n\n` +
         `Event: ${qrData.eventName}\n` +
         `Date: ${formattedDate}\n` +
         `Registration: ${qrData.registrationStartTime}\n` +
@@ -266,7 +266,7 @@ export const QRGeneratorPanel = ({ onNotify }: QRGeneratorPanelProps) => {
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
         try {
           await navigator.share({
-            title: `BNI Anchor Event - ${formattedDate}`,
+            title: `EventXP for BNI Anchor - ${formattedDate}`,
             text: message,
             files: [pdfFile]
           });
@@ -316,7 +316,7 @@ export const QRGeneratorPanel = ({ onNotify }: QRGeneratorPanelProps) => {
         month: "long",
         day: "numeric"
       });
-      const subject = `BNI Anchor Event Check-in - ${formattedDate}`;
+      const subject = `EventXP for BNI Anchor - Check-in ${formattedDate}`;
       const body = `Dear Members,\n\n` +
         `Please find the check-in details for our upcoming event:\n\n` +
         `Event: ${qrData.eventName}\n` +
@@ -326,7 +326,7 @@ export const QRGeneratorPanel = ({ onNotify }: QRGeneratorPanelProps) => {
         `On-time Cutoff: ${qrData.onTimeCutoff}\n\n` +
         `Please scan the QR code in the attached PDF to check in at the event.\n\n` +
         `Best regards,\n` +
-        `BNI Anchor Team`;
+        `EventXP for BNI Anchor Team`;
 
       // Try Web Share API first (supports file attachments on mobile/some browsers)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
@@ -377,7 +377,7 @@ export const QRGeneratorPanel = ({ onNotify }: QRGeneratorPanelProps) => {
         `📁 Look in your Downloads folder for: BNI-Anchor-${qrData.eventDate}.pdf\n\n` +
         `Attendees can scan the QR code in the PDF to check in at the event.\n\n` +
         `Best regards,\n` +
-        `BNI Anchor Team`
+        `EventXP for BNI Anchor Team`
       );
       
       // Longer delay to ensure download completes and user sees the notification
@@ -405,7 +405,7 @@ export const QRGeneratorPanel = ({ onNotify }: QRGeneratorPanelProps) => {
         <input
           id="event-name-input"
           className="input-field"
-          placeholder="例如: BNI Anchor Meeting"
+          placeholder="例如: EventXP for BNI Anchor Meeting"
           value={eventName}
           onChange={(e) => setEventName(e.target.value)}
         />

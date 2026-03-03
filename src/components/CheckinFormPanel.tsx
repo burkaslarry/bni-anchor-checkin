@@ -70,7 +70,7 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
     setIsLoading(true);
     try {
       const result = await getGuests();
-      const filteredGuests = result.guests
+      const filteredGuests = (result.guests ?? [])
         .filter((g) => g.eventDate === eventDate)
         .map((g, idx) => ({
           id: idx + 1,
@@ -238,7 +238,7 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
     <section className="section checkin-form-panel">
       {/* Header */}
       <div className="section-header" style={{ marginBottom: "1.5rem" }}>
-        <h2 style={{ margin: 0 }}>✅ BNI Anchor 簽到 Check-in</h2>
+        <h2 style={{ margin: 0 }}>✅ EventXP for BNI Anchor 簽到 Check-in</h2>
         <p className="hint" style={{ margin: "0.25rem 0 0 0" }}>
           活動日期 Event Date:{" "}
           <strong>

@@ -21,8 +21,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg"],
       manifest: {
-        name: "BNI Anchor Checkin",
-        short_name: "Anchor Checkin",
+        name: "EventXP for BNI Anchor",
+        short_name: "EventXP",
         description: "QR code attendance tracker for BNI Anchor members.",
         theme_color: "#0f172a",
         background_color: "#0f172a",
