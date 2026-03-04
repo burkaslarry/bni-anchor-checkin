@@ -34,6 +34,7 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
   const [checkInSuccess, setCheckInSuccess] = useState(false);
   const [alreadyCheckedIn, setAlreadyCheckedIn] = useState(false);
   const [noEventForDate, setNoEventForDate] = useState(false);
+  const [availableEventDate, setAvailableEventDate] = useState<string | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -86,14 +87,48 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
     setIsLoading(false);
   };
 
-  // Check if event exists for eventDate
+  // Check if event exists for eventDate or the next 2 days
   useEffect(() => {
     let cancelled = false;
-    getEventForDate(eventDate).then((event) => {
-      if (!cancelled) {
-        setNoEventForDate(!event);
+    
+    const checkMultipleDates = async () => {
+      // Generate array of dates: today, today+1, today+2
+      const dates: string[] = [];
+      const baseDate = new Date(eventDate);
+      
+      for (let i = 0; i < 3; i++) {
+        const checkDate = new Date(baseDate);
+        checkDate.setDate(baseDate.getDate() + i);
+        dates.push(checkDate.toISOString().split("T")[0]);
       }
-    });
+      
+      // Check each date sequentially to find the earliest event
+      for (const date of dates) {
+        if (cancelled) break;
+        
+        const event = await getEventForDate(date);
+        if (event && !cancelled) {
+          // Found an event
+          setNoEventForDate(false);
+          setAvailableEventDate(date);
+          
+          // If the found date is different from the current eventDate, redirect
+          if (date !== eventDate) {
+            const newUrl = `${window.location.pathname}?event=${date}`;
+            window.location.href = newUrl;
+          }
+          return;
+        }
+      }
+      
+      // No event found in all 3 days
+      if (!cancelled) {
+        setNoEventForDate(true);
+        setAvailableEventDate(null);
+      }
+    };
+    
+    checkMultipleDates();
     return () => { cancelled = true; };
   }, [eventDate]);
 
@@ -129,7 +164,33 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
       try {
         const msg = JSON.parse(e.data);
         if (msg.type === "attendance_updated" || msg.type === "event_created") {
-          getEventForDate(eventDate).then((event) => setNoEventForDate(!event));
+          // Re-check for events in the next 3 days
+          const checkMultipleDates = async () => {
+            const dates: string[] = [];
+            const baseDate = new Date(eventDate);
+            
+            for (let i = 0; i < 3; i++) {
+              const checkDate = new Date(baseDate);
+              checkDate.setDate(baseDate.getDate() + i);
+              dates.push(checkDate.toISOString().split("T")[0]);
+            }
+            
+            for (const date of dates) {
+              const event = await getEventForDate(date);
+              if (event) {
+                setNoEventForDate(false);
+                setAvailableEventDate(date);
+                if (date !== eventDate) {
+                  window.location.href = `${window.location.pathname}?event=${date}`;
+                }
+                return;
+              }
+            }
+            setNoEventForDate(true);
+            setAvailableEventDate(null);
+          };
+          
+          checkMultipleDates();
           if (checkinType === "member") fetchMembers();
           else fetchGuests();
         }
@@ -207,6 +268,12 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
   };
 
   if (noEventForDate) {
+    // Calculate the date range checked
+    const baseDate = new Date(eventDate);
+    const endDate = new Date(baseDate);
+    endDate.setDate(baseDate.getDate() + 2);
+    const dateRange = `${eventDate} ~ ${endDate.toISOString().split("T")[0]}`;
+    
     return (
       <section className="section checkin-form-panel">
         <div
@@ -224,7 +291,7 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
             尚未建立活動 No Event Created
           </h2>
           <p style={{ margin: "0 0 1rem 0", color: "#991b1b" }}>
-            此日期 ({eventDate}) 尚未建立活動。請主辦單位先在管理頁面建立活動後再進行簽到。
+            此日期範圍 ({dateRange}) 尚未建立活動。請主辦單位先在管理頁面建立活動後再進行簽到。
           </p>
           <p style={{ margin: 0, fontSize: "0.9rem", color: "#7f1d1d" }}>
             Please ask the organizer to create the event first at the admin page.
