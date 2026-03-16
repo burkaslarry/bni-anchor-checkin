@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { getEventForDate, getMembers, getGuests, logAttendance, getReportWebSocketUrl } from "../api";
+import { getEventForDate, getMembers, getGuests, getCurrentEvent, logAttendance, getReportWebSocketUrl } from "../api";
 
 type CheckinType = "member" | "guest";
 
@@ -66,21 +66,21 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
     setIsLoading(false);
   };
 
-  // Fetch guests from backend filtered by event_date
+  // Fetch guests for the latest event only (onsite support: check-in form shows only current event's guests)
   const fetchGuests = async () => {
     setIsLoading(true);
     try {
-      const result = await getGuests();
-      const filteredGuests = (result.guests ?? [])
-        .filter((g) => g.eventDate === eventDate)
-        .map((g, idx) => ({
-          id: idx + 1,
-          name: g.name,
-          profession: g.profession,
-          referrer: g.referrer,
-          event_date: g.eventDate,
-        }));
-      setGuests(filteredGuests);
+      const currentEvent = await getCurrentEvent();
+      const dateForGuests = currentEvent?.date ?? eventDate;
+      const result = await getGuests(dateForGuests);
+      const mappedGuests = (result.guests ?? []).map((g, idx) => ({
+        id: idx + 1,
+        name: g.name,
+        profession: g.profession,
+        referrer: g.referrer,
+        event_date: g.eventDate,
+      }));
+      setGuests(mappedGuests);
     } catch (error) {
       onNotify("無法載入嘉賓列表", "error");
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { checkIn, getMembers, getGuests, MemberInfo, GuestInfo, AttendeeRole, checkEventThisWeek } from "../api";
+import { checkIn, getMembers, getGuests, getCurrentEvent, MemberInfo, GuestInfo, AttendeeRole, checkEventThisWeek } from "../api";
 
 type AdminManualEntryPanelProps = {
   onNotify: (message: string, type: "success" | "error" | "info") => void;
@@ -53,25 +53,26 @@ export const AdminManualEntryPanel = ({ onNotify }: AdminManualEntryPanelProps) 
     });
   }, []);
 
-  // Fetch members and guests list
+  // Fetch members and guests list (guests: only for current/latest event date; do not fetch all or past-date guests)
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [membersData, guestsData] = await Promise.all([
-          getMembers(),
-          getGuests()
-        ]);
+        const currentEvent = await getCurrentEvent();
+        const eventDate = currentEvent?.date ?? "";
+        const membersData = await getMembers();
+        const guestList = eventDate
+          ? (await getGuests(eventDate)).guests ?? []
+          : [];
         setMembers(membersData.members);
-        setGuests(guestsData.guests || []);
-        
-        // Combine into batch list
+        setGuests(guestList);
+
         const combined: BatchPerson[] = [
           ...membersData.members.map(m => ({
             name: m.name,
             domain: m.domain,
             type: "member" as const
           })),
-          ...(guestsData.guests || []).map(g => ({
+          ...guestList.map(g => ({
             name: g.name,
             domain: g.profession,
             type: "guest" as const,

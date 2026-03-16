@@ -3,12 +3,12 @@
 > vite
 
 
-  VITE v7.2.2  ready in 144 ms
+  VITE v7.2.2  ready in 206 ms
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
-3:31:07 PM [vite] ws proxy error:
+2:08:17 PM [vite] ws proxy error:
 Error: write EPIPE
     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
     at writeGeneric (node:internal/stream_base_commons:150:3)
@@ -23,7 +23,7 @@ Error: write EPIPE
     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
     at Readable.push (node:internal/streams/readable:392:5)
     at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
-3:31:07 PM [vite] ws proxy socket error:
+2:08:17 PM [vite] ws proxy socket error:
 Error: write EPIPE
     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
     at writeGeneric (node:internal/stream_base_commons:150:3)
@@ -38,7 +38,7 @@ Error: write EPIPE
     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
     at Readable.push (node:internal/streams/readable:392:5)
     at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
-3:35:55 PM [vite] ws proxy error:
+2:08:51 PM [vite] ws proxy error:
 Error: write EPIPE
     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
     at writeGeneric (node:internal/stream_base_commons:150:3)
@@ -53,7 +53,7 @@ Error: write EPIPE
     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
     at Readable.push (node:internal/streams/readable:392:5)
     at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
-3:35:55 PM [vite] ws proxy socket error:
+2:08:51 PM [vite] ws proxy socket error:
 Error: write EPIPE
     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
     at writeGeneric (node:internal/stream_base_commons:150:3)
