@@ -314,7 +314,7 @@ export default function ReportPage() {
             onClick={() => setViewTab("report")}
             style={{ borderRadius: "8px 0 0 0", borderRight: "1px solid #475569" }}
           >
-            📊 出席報告
+            📊 會員出席報告
           </button>
           <button
             className={`filter-btn ${viewTab === "records" ? "active" : ""}`}
