@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getCurrentEvent, clearAllEventsAndAttendance, EventData } from "../api";
+import { getCurrentEvent, clearAllEventsAndAttendance, EventData, exportRecords, listEvents } from "../api";
 
 type EventManagementPanelProps = {
   onNotify: (message: string, type: "success" | "error" | "info") => void;
@@ -9,17 +9,22 @@ type EventManagementPanelProps = {
 
 export const EventManagementPanel = ({ onNotify, onNavigateToStrategic, onNavigateToGenerate }: EventManagementPanelProps) => {
   const [currentEvent, setCurrentEvent] = useState<EventData | null>(null);
+  const [allEvents, setAllEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const fetchCurrentEvent = useCallback(async () => {
     setLoading(true);
     try {
       const event = await getCurrentEvent();
       setCurrentEvent(event);
+      const events = await listEvents();
+      setAllEvents(Array.isArray(events) ? events : []);
     } catch {
       setCurrentEvent(null);
+      setAllEvents([]);
     } finally {
       setLoading(false);
     }
@@ -51,6 +56,24 @@ export const EventManagementPanel = ({ onNotify, onNavigateToStrategic, onNaviga
       onNotify("清除失敗: " + (error instanceof Error ? error.message : "未知錯誤"), "error");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleExportTodayCsv = async () => {
+    setExporting(true);
+    try {
+      const blob = await exportRecords();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "attendance.csv";
+      link.click();
+      window.URL.revokeObjectURL(url);
+      onNotify("已匯出 CSV（包含缺席名單）", "success");
+    } catch (e) {
+      onNotify("匯出失敗: " + (e instanceof Error ? e.message : "未知錯誤"), "error");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -102,31 +125,9 @@ export const EventManagementPanel = ({ onNotify, onNavigateToStrategic, onNaviga
                 <span className="info-label">🏁 活動結束</span>
                 <span className="info-value">{formatTime(currentEvent.endTime)}</span>
               </div>
-              <div className="info-item">
-                <span className="info-label">📝 建立時間</span>
-                <span className="info-value small">{new Date(currentEvent.createdAt).toLocaleString("zh-TW")}</span>
-              </div>
             </div>
 
             <div className="event-actions">
-              <a 
-                href="/report" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="button view-report-btn"
-              >
-                📊 查看即時報告
-              </a>
-              {onNavigateToStrategic && (
-                <button
-                  className="button strategic-btn"
-                  type="button"
-                  onClick={onNavigateToStrategic}
-                  style={{ backgroundColor: "#8b5cf6" }}
-                >
-                  🎯 Strategic Seating
-                </button>
-              )}
               <button
                 className="ghost-button refresh-btn"
                 type="button"
@@ -134,7 +135,61 @@ export const EventManagementPanel = ({ onNotify, onNavigateToStrategic, onNaviga
               >
                 🔄 重新整理
               </button>
+              <button
+                className="button"
+                type="button"
+                onClick={handleExportTodayCsv}
+                disabled={exporting}
+                style={{ backgroundColor: "#0ea5e9" }}
+              >
+                {exporting ? "⏳ 匯出中..." : "📥 當日出席記錄 CSV（含缺席）"}
+              </button>
+              <a
+                href={`/admin/guests?eventDate=${encodeURIComponent(currentEvent.date)}`}
+                className="button"
+                style={{ backgroundColor: "#10b981" }}
+              >
+                🎫 本活動嘉賓名單
+              </a>
             </div>
+          </div>
+
+          <div className="section" style={{ marginTop: "1rem" }}>
+            <div className="section-header">
+              <h3>🗂️ 過往活動</h3>
+              <p className="hint">顯示 bni_anchor_events 全部活動（最新在最頂，按 id 由大到細）</p>
+            </div>
+
+            {allEvents.length === 0 ? (
+              <p className="hint">暫無活動資料</p>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
+                      <th style={{ textAlign: "left", padding: "0.75rem" }}>ID</th>
+                      <th style={{ textAlign: "left", padding: "0.75rem" }}>活動名稱</th>
+                      <th style={{ textAlign: "left", padding: "0.75rem" }}>日期</th>
+                      <th style={{ textAlign: "left", padding: "0.75rem" }}>登記開始</th>
+                      <th style={{ textAlign: "left", padding: "0.75rem" }}>開始</th>
+                      <th style={{ textAlign: "left", padding: "0.75rem" }}>準時截止</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allEvents.map((ev) => (
+                      <tr key={ev.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
+                        <td style={{ padding: "0.75rem" }}>{ev.id}</td>
+                        <td style={{ padding: "0.75rem" }}>{ev.name}</td>
+                        <td style={{ padding: "0.75rem" }}>{ev.date}</td>
+                        <td style={{ padding: "0.75rem" }}>{formatTime(ev.registrationStartTime)}</td>
+                        <td style={{ padding: "0.75rem" }}>{formatTime(ev.startTime)}</td>
+                        <td style={{ padding: "0.75rem" }}>{formatTime(ev.onTimeCutoff)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           <div className="danger-zone">

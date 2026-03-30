@@ -92,6 +92,21 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
     let cancelled = false;
     
     const checkMultipleDates = async () => {
+      // Prefer latest/current event for onsite support (even if it's in the past/future).
+      try {
+        const current = await getCurrentEvent();
+        if (!cancelled && current?.date) {
+          setNoEventForDate(false);
+          setAvailableEventDate(current.date);
+          if (current.date !== eventDate) {
+            window.location.href = `${window.location.pathname}?event=${current.date}`;
+            return;
+          }
+        }
+      } catch {
+        // Ignore and fall back to date-range probing below.
+      }
+
       // Generate array of dates: today, today+1, today+2
       const dates: string[] = [];
       const baseDate = new Date(eventDate);
@@ -164,8 +179,21 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
       try {
         const msg = JSON.parse(e.data);
         if (msg.type === "attendance_updated" || msg.type === "event_created") {
-          // Re-check for events in the next 3 days
+          // Prefer latest/current event (onsite support), fallback to next-3-days probe
           const checkMultipleDates = async () => {
+            try {
+              const current = await getCurrentEvent();
+              if (current?.date) {
+                setNoEventForDate(false);
+                setAvailableEventDate(current.date);
+                if (current.date !== eventDate) {
+                  window.location.href = `${window.location.pathname}?event=${current.date}`;
+                  return;
+                }
+              }
+            } catch {
+              // ignore
+            }
             const dates: string[] = [];
             const baseDate = new Date(eventDate);
             
@@ -313,7 +341,6 @@ export const CheckinFormPanel = ({ onNotify }: CheckinFormPanelProps) => {
               year: "numeric",
               month: "long",
               day: "numeric",
-              weekday: "long",
             })}
           </strong>
         </p>

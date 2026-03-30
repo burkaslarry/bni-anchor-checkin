@@ -3,12 +3,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import { NotificationStack } from "../components/NotificationStack";
 import { NotificationEntry } from "../components/ScanPanel";
 import { QRGeneratorPanel } from "../components/QRGeneratorPanel";
-import { RecordsPanel } from "../components/RecordsPanel";
 import { AdminManualEntryPanel } from "../components/AdminManualEntryPanel";
 import { EventManagementPanel } from "../components/EventManagementPanel";
 import { StrategicPlanningPanel } from "../components/StrategicPlanningPanel";
 
-type AdminView = "home" | "generate" | "records" | "manual" | "event" | "strategic";
+type AdminView = "home" | "generate" | "manual" | "event" | "strategic";
 
 const navTargets: { id: AdminView; title: string; description: string; icon: string }[] = [
   {
@@ -30,12 +29,6 @@ const navTargets: { id: AdminView; title: string; description: string; icon: str
     icon: "🔳"
   },
   {
-    id: "records",
-    title: "簽到記錄 & 匯出",
-    description: "查看記錄並匯出 CSV",
-    icon: "📋"
-  },
-  {
     id: "manual",
     title: "手動輸入",
     description: "管理員手動新增記錄",
@@ -54,7 +47,7 @@ export default function AdminPage() {
   // Handle URL parameter for direct navigation
   useEffect(() => {
     const viewParam = searchParams.get("view");
-    if (viewParam && ["generate", "records", "manual", "event", "strategic"].includes(viewParam)) {
+    if (viewParam && ["generate", "manual", "event", "strategic"].includes(viewParam)) {
       setActiveView(viewParam as AdminView);
       // Clear the URL parameter after navigating
       setSearchParams({}, { replace: true });
@@ -98,8 +91,6 @@ export default function AdminPage() {
         return <StrategicPlanningPanel onNotify={handlePanelNotification} />;
       case "generate":
         return <QRGeneratorPanel onNotify={handlePanelNotification} />;
-      case "records":
-        return <RecordsPanel onNotify={handlePanelNotification} />;
       case "manual":
         return <AdminManualEntryPanel onNotify={handlePanelNotification} />;
       default:
@@ -146,6 +137,18 @@ export default function AdminPage() {
                 <span className="hint">{item.description}</span>
               </button>
             ))}
+
+            <a
+              href="/report"
+              className="nav-card"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: "none" }}
+            >
+              <span className="nav-icon">📊</span>
+              <strong className="nav-title">出席報表 / 匯出</strong>
+              <span className="hint">直接前往報表頁（包含匯出 CSV）</span>
+            </a>
             
             {/* External Links to New Pages */}
             <Link to="/admin/members" className="nav-card" style={{ textDecoration: 'none' }}>
@@ -164,6 +167,12 @@ export default function AdminPage() {
               <span className="nav-icon">📥</span>
               <strong className="nav-title">批量匯入</strong>
               <span className="hint">CSV 批量新增會員/嘉賓</span>
+            </Link>
+
+            <Link to="/admin/public-guest" className="nav-card" style={{ textDecoration: "none" }}>
+              <span className="nav-icon">🔗</span>
+              <strong className="nav-title">公開嘉賓登記連結</strong>
+              <span className="hint">教你點樣 share /public/guest 俾人填</span>
             </Link>
           </div>
         </section>

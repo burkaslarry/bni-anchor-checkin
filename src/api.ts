@@ -241,6 +241,7 @@ export type GuestInfo = {
   profession: string;
   referrer: string;
   eventDate?: string;
+  phoneNumber?: string;
 };
 
 /**
@@ -263,6 +264,62 @@ export async function getGuests(eventDate?: string): Promise<{ guests: GuestInfo
     }
     throw e;
   }
+}
+
+export type PublicCaptchaChallenge = {
+  a: number;
+  b: number;
+  op: string;
+  nonce: string;
+  signature: string;
+};
+
+export type PublicGuestCreateRequest = {
+  name: string;
+  profession: string;
+  phoneNumber: string;
+  referrer?: string;
+  eventDate?: string;
+  eventId?: number;
+  notes?: string;
+  captcha: {
+    a: number;
+    b: number;
+    op: string;
+    nonce: string;
+    signature: string;
+    answer: number;
+  };
+};
+
+/** Issue a server-signed CAPTCHA challenge for public forms. GET /api/public/captcha. */
+export async function getPublicCaptcha(): Promise<PublicCaptchaChallenge> {
+  const response = await fetch(`${API_BASE}/api/public/captcha`, { mode: "cors" });
+  return handleResponse(response);
+}
+
+/**
+ * Public walk-in guest registration. POST /api/public/guests.
+ * Side effect: network; backend inserts into bni_anchor_guests.
+ * @throws {Error} 403 captcha_failed, 409 duplicate_guest_phone_event, 400 validation errors
+ */
+export async function createPublicGuest(request: PublicGuestCreateRequest): Promise<{
+  status: string;
+  guest: { id?: number; name: string };
+}> {
+  const response = await fetch(`${API_BASE}/api/public/guests`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify(request),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+/** Get one event by id. GET /api/events/{id}. Side effect: network. */
+export async function getEventById(eventId: number): Promise<EventData> {
+  const response = await fetch(`${API_BASE}/api/events/${encodeURIComponent(String(eventId))}`, { mode: "cors" });
+  return handleResponse(response);
 }
 
 /**
@@ -425,6 +482,12 @@ export type EventData = {
   onTimeCutoff: string;
   createdAt: string;
 };
+
+/** List all events (latest first). GET /api/events. Side effect: network. */
+export async function listEvents(): Promise<EventData[]> {
+  const response = await fetch(`${API_BASE}/api/events`, { mode: "cors" });
+  return handleResponse(response);
+}
 
 /**
  * Get current event. GET /api/events/current. Returns null on 404 or network error.
