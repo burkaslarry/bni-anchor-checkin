@@ -6,16 +6,11 @@ import { QRGeneratorPanel } from "../components/QRGeneratorPanel";
 import { AdminManualEntryPanel } from "../components/AdminManualEntryPanel";
 import { EventManagementPanel } from "../components/EventManagementPanel";
 import { StrategicPlanningPanel } from "../components/StrategicPlanningPanel";
+import { getCurrentEvent, type EventData } from "../api";
 
 type AdminView = "home" | "generate" | "manual" | "event" | "strategic";
 
 const navTargets: { id: AdminView; title: string; description: string; icon: string }[] = [
-  {
-    id: "event",
-    title: "活動管理",
-    description: "查看和管理目前活動",
-    icon: "📅"
-  },
   {
     id: "strategic",
     title: "Strategic Seating",
@@ -43,6 +38,25 @@ export default function AdminPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeView, setActiveView] = useState<AdminView>("home");
   const [notifications, setNotifications] = useState<NotificationEntry[]>([]);
+  const [homeCurrentEvent, setHomeCurrentEvent] = useState<EventData | null>(null);
+  const [homeEventLoading, setHomeEventLoading] = useState(false);
+
+  const loadHomeCurrentEvent = useCallback(async () => {
+    setHomeEventLoading(true);
+    try {
+      setHomeCurrentEvent(await getCurrentEvent());
+    } catch {
+      setHomeCurrentEvent(null);
+    } finally {
+      setHomeEventLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeView === "home") {
+      void loadHomeCurrentEvent();
+    }
+  }, [activeView, loadHomeCurrentEvent]);
 
   // Handle URL parameter for direct navigation
   useEffect(() => {
@@ -81,9 +95,8 @@ export default function AdminPage() {
     switch (activeView) {
       case "event":
         return (
-          <EventManagementPanel 
-            onNotify={handlePanelNotification} 
-            onNavigateToStrategic={() => setActiveView("strategic")}
+          <EventManagementPanel
+            onNotify={handlePanelNotification}
             onNavigateToGenerate={() => setActiveView("generate")}
           />
         );
@@ -122,9 +135,48 @@ export default function AdminPage() {
         <section className="section admin-panel">
           <div className="section-header">
             <h2>選擇功能</h2>
-            <p className="hint">管理與匯出功能</p>
+            <p className="hint admin-home-current-event-line">
+              {homeEventLoading ? (
+                "載入當前活動…"
+              ) : homeCurrentEvent ? (
+                <>
+                  當前活動：<strong>{homeCurrentEvent.name}</strong>{" "}
+                  <span className="admin-home-current-date">({homeCurrentEvent.date})</span>
+                  {" · "}
+                  <button
+                    type="button"
+                    className="admin-link-to-events"
+                    onClick={() => setActiveView("event")}
+                  >
+                    前往活動管理
+                  </button>
+                </>
+              ) : (
+                <>
+                  當前活動：<span className="admin-home-current-date">未設定</span>
+                  {" · "}
+                  <button
+                    type="button"
+                    className="admin-link-to-events"
+                    onClick={() => setActiveView("event")}
+                  >
+                    前往活動管理
+                  </button>
+                </>
+              )}
+            </p>
           </div>
           <div className="nav-grid">
+            <button
+              type="button"
+              className="nav-card"
+              onClick={() => setActiveView("event")}
+            >
+              <span className="nav-icon">📅</span>
+              <strong className="nav-title">活動管理</strong>
+              <span className="hint">查看／切換當前活動</span>
+            </button>
+
             {navTargets.map((item) => (
               <button
                 key={item.id}
