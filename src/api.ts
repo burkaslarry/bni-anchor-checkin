@@ -62,6 +62,14 @@ const jsonHeaders = {
 
 const FETCH_TIMEOUT_MS = 25000;
 
+/** Normalizes event id for `?eventId=` (handles numeric strings from JSON). */
+export function normalizeApiEventId(eventId?: number | string | null): number | undefined {
+  if (eventId === undefined || eventId === null || eventId === "") return undefined;
+  if (typeof eventId === "number" && Number.isFinite(eventId)) return Math.trunc(eventId);
+  const n = Number.parseInt(String(eventId).trim(), 10);
+  return Number.isNaN(n) ? undefined : n;
+}
+
 /**
  * Fetch with abort after timeout. Side effect: network I/O. Does not throw on HTTP errors.
  * @param {string} url
@@ -383,8 +391,10 @@ export async function deleteRecord(index: number): Promise<{ status: string; mes
  * @returns {Promise<Blob>} CSV file blob
  * @throws {Error} "Failed to export records" when !response.ok
  */
-export async function exportRecords(): Promise<Blob> {
-  const response = await fetch(`${API_BASE}/api/export`, { mode: "cors" });
+export async function exportRecords(eventId?: number | string | null): Promise<Blob> {
+  const id = normalizeApiEventId(eventId);
+  const q = id !== undefined ? `?eventId=${encodeURIComponent(String(id))}` : "";
+  const response = await fetch(`${API_BASE}/api/export${q}`, { mode: "cors" });
   if (!response.ok) {
     throw new Error("Failed to export records");
   }
@@ -506,6 +516,37 @@ export async function getCurrentEvent(): Promise<EventData | null> {
   }
 }
 
+/**
+ * Set event as active for check-in. POST /api/events/{id}/activate. exclusive=true clears is_active on other events.
+ */
+export async function activateEvent(
+  eventId: number,
+  exclusive = true
+): Promise<{ status: string; exclusive?: boolean; event?: unknown; message?: string }> {
+  const response = await fetch(`${API_BASE}/api/events/${eventId}/activate`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({ exclusive }),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+/**
+ * Soft-delete one event. DELETE /api/events/{id}?force=true cascades attendance rows.
+ */
+export async function deleteEvent(
+  eventId: number,
+  force = false
+): Promise<{ status: string; message?: string }> {
+  const q = force ? "?force=true" : "?force=false";
+  const response = await fetch(`${API_BASE}/api/events/${eventId}${q}`, {
+    method: "DELETE",
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
 /** Report page: attendance status. */
 export type AttendanceStatus = "on-time" | "late" | "absent";
 
@@ -577,8 +618,10 @@ export type AIInsightResponse = {
  * @returns {Promise<ReportData | null>}
  * @throws {Error} On non-404 HTTP error
  */
-export async function getReportData(): Promise<ReportData | null> {
-  const response = await fetch(`${API_BASE}/api/report`, { mode: "cors" });
+export async function getReportData(eventId?: number | string | null): Promise<ReportData | null> {
+  const id = normalizeApiEventId(eventId);
+  const q = id !== undefined ? `?eventId=${encodeURIComponent(String(id))}` : "";
+  const response = await fetch(`${API_BASE}/api/report${q}`, { mode: "cors" });
   if (response.ok) {
     return handleResponse(response);
   }
