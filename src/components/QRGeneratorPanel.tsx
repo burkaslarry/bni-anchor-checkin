@@ -479,7 +479,7 @@ export const QRGeneratorPanel = ({ onNotify }: QRGeneratorPanelProps) => {
             {/* BNI Anchor Logo */}
             <div style={{ textAlign: "center", marginBottom: "2rem" }}>
               <img 
-                src="/bni-anchor-logo.png" 
+                src="/bni-anchor.svg" 
                 alt="BNI Anchor Logo" 
                 style={{ maxWidth: "300px", height: "auto" }}
                 onError={(e) => {
