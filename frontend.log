@@ -3,12 +3,217 @@
 > vite
 
 
-  VITE v7.2.2  ready in 143 ms
+  VITE v7.2.2  ready in 159 ms
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
-1:07:04 PM [vite] ws proxy error:
+7:41:10 PM [vite] (client) hmr update /src/pages/AdminPublicGuestLinkPage.tsx
+7:42:34 PM [vite] (client) hmr update /src/pages/AdminPublicGuestLinkPage.tsx
+7:42:34 PM [vite] Internal server error: /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/src/pages/AdminPublicGuestLinkPage.tsx: Unexpected token, expected "}" (118:78)
+
+  116 |                 📋 複製連結
+  117 |               </button>
+> 118 |               <button className="button" type="button" onClick={() => void go to public guest review form()} style={{ background: "#10ff81" }}>
+      |                                                                               ^
+  119 |                 🔎 預覽表格
+  120 |               </button>
+  121 |               
+  Plugin: vite:react-babel
+  File: /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/src/pages/AdminPublicGuestLinkPage.tsx:118:78
+  116 |                  📋 複製連結
+  117 |                </button>
+  118 |  ...ton className="button" type="button" onClick={() => void go to public guest review form()} style={{ background: "#...
+      |                                                                 ^
+  119 |                  🔎 預覽表格
+  120 |                </button>
+      at constructor (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:367:19)
+      at TypeScriptParserMixin.raise (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6624:19)
+      at TypeScriptParserMixin.unexpected (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6644:16)
+      at TypeScriptParserMixin.expect (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6924:12)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4666:10)
+      at TypeScriptParserMixin.jsxParseAttributeValue (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4633:21)
+      at TypeScriptParserMixin.jsxParseAttribute (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4682:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4696:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10100:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4691:17)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4715:33)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElement (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4778:17)
+      at TypeScriptParserMixin.parseExprAtom (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4788:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11145:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11130:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11110:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9890:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10963:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10968:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10945:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10895:21)
+      at /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9828:39
+      at TypeScriptParserMixin.tryParse (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6932:20)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9828:18)
+      at /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10864:39
+      at TypeScriptParserMixin.allowInAnd (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:12500:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10864:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:12567:17)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11747:28)
+      at TypeScriptParserMixin.parseExprAtom (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11395:23)
+      at TypeScriptParserMixin.parseExprAtom (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4793:20)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11145:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11130:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11110:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9890:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10963:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10968:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10945:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10895:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9839:20)
+      at TypeScriptParserMixin.parseExpressionBase (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10848:23)
+      at /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10844:39
+      at TypeScriptParserMixin.allowInAnd (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:12495:16)
+      at TypeScriptParserMixin.parseExpression (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10844:17)
+      at TypeScriptParserMixin.parseReturnStatement (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:13218:28)
+7:42:34 PM [vite] Internal server error: /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/src/pages/AdminPublicGuestLinkPage.tsx: Unexpected token, expected "}" (118:78)
+
+  116 |                 📋 複製連結
+  117 |               </button>
+> 118 |               <button className="button" type="button" onClick={() => void go to public guest review form()} style={{ background: "#10ff81" }}>
+      |                                                                               ^
+  119 |                 🔎 預覽表格
+  120 |               </button>
+  121 |               
+  Plugin: vite:react-babel
+  File: /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/src/pages/AdminPublicGuestLinkPage.tsx:118:78
+  116 |                  📋 複製連結
+  117 |                </button>
+  118 |  ...ton className="button" type="button" onClick={() => void go to public guest review form()} style={{ background: "#...
+      |                                                                 ^
+  119 |                  🔎 預覽表格
+  120 |                </button>
+      at constructor (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:367:19)
+      at TypeScriptParserMixin.raise (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6624:19)
+      at TypeScriptParserMixin.unexpected (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6644:16)
+      at TypeScriptParserMixin.expect (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6924:12)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4666:10)
+      at TypeScriptParserMixin.jsxParseAttributeValue (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4633:21)
+      at TypeScriptParserMixin.jsxParseAttribute (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4682:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4696:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10100:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4691:17)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4715:33)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElement (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4778:17)
+      at TypeScriptParserMixin.parseExprAtom (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4788:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11145:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11130:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11110:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9890:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10963:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10968:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10945:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10895:21)
+      at /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9828:39
+      at TypeScriptParserMixin.tryParse (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6932:20)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9828:18)
+      at /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10864:39
+      at TypeScriptParserMixin.allowInAnd (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:12500:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10864:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:12567:17)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11747:28)
+      at TypeScriptParserMixin.parseExprAtom (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11395:23)
+      at TypeScriptParserMixin.parseExprAtom (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4793:20)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11145:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11130:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11110:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9890:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10963:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10968:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10945:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10895:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9839:20)
+      at TypeScriptParserMixin.parseExpressionBase (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10848:23)
+      at /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10844:39
+      at TypeScriptParserMixin.allowInAnd (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:12495:16)
+      at TypeScriptParserMixin.parseExpression (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10844:17)
+      at TypeScriptParserMixin.parseReturnStatement (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:13218:28)
+7:42:34 PM [vite] Internal server error: /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/src/pages/AdminPublicGuestLinkPage.tsx: Unexpected token, expected "}" (118:78)
+
+  116 |                 📋 複製連結
+  117 |               </button>
+> 118 |               <button className="button" type="button" onClick={() => void go to public guest review form()} style={{ background: "#10ff81" }}>
+      |                                                                               ^
+  119 |                 🔎 預覽表格
+  120 |               </button>
+  121 |               
+  Plugin: vite:react-babel
+  File: /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/src/pages/AdminPublicGuestLinkPage.tsx:118:78
+  116 |                  📋 複製連結
+  117 |                </button>
+  118 |  ...ton className="button" type="button" onClick={() => void go to public guest review form()} style={{ background: "#...
+      |                                                                 ^
+  119 |                  🔎 預覽表格
+  120 |                </button>
+      at constructor (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:367:19)
+      at TypeScriptParserMixin.raise (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6624:19)
+      at TypeScriptParserMixin.unexpected (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6644:16)
+      at TypeScriptParserMixin.expect (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6924:12)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4666:10)
+      at TypeScriptParserMixin.jsxParseAttributeValue (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4633:21)
+      at TypeScriptParserMixin.jsxParseAttribute (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4682:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4696:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10100:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4691:17)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4715:33)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElementAt (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4727:32)
+      at TypeScriptParserMixin.jsxParseElement (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4778:17)
+      at TypeScriptParserMixin.parseExprAtom (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4788:19)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11145:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11130:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11110:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9890:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10963:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10968:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10945:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10895:21)
+      at /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9828:39
+      at TypeScriptParserMixin.tryParse (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:6932:20)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9828:18)
+      at /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10864:39
+      at TypeScriptParserMixin.allowInAnd (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:12500:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10864:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:12567:17)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11747:28)
+      at TypeScriptParserMixin.parseExprAtom (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11395:23)
+      at TypeScriptParserMixin.parseExprAtom (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:4793:20)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11145:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11130:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:11110:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9890:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10963:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10968:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10945:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10895:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:9839:20)
+      at TypeScriptParserMixin.parseExpressionBase (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10848:23)
+      at /Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10844:39
+      at TypeScriptParserMixin.allowInAnd (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:12495:16)
+      at TypeScriptParserMixin.parseExpression (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:10844:17)
+      at TypeScriptParserMixin.parseReturnStatement (/Users/larrylo/SourceProject/bni-checkin/bni-anchor-checkin/node_modules/@babel/parser/lib/index.js:13218:28)
+7:42:49 PM [vite] (client) hmr update /src/pages/AdminPublicGuestLinkPage.tsx
+7:44:43 PM [vite] (client) hmr update /src/pages/PublicGuestWalkinPage.tsx
+8:06:23 PM [vite] ws proxy error:
 Error: write EPIPE
     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
     at writeGeneric (node:internal/stream_base_commons:150:3)
@@ -23,7 +228,7 @@ Error: write EPIPE
     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
     at Readable.push (node:internal/streams/readable:392:5)
     at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
-1:07:04 PM [vite] ws proxy socket error:
+8:06:23 PM [vite] ws proxy socket error:
 Error: write EPIPE
     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
     at writeGeneric (node:internal/stream_base_commons:150:3)
@@ -38,7 +243,63 @@ Error: write EPIPE
     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
     at Readable.push (node:internal/streams/readable:392:5)
     at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
-1:21:32 PM [vite] (client) hmr update /src/components/CheckinFormPanel.tsx
-1:21:37 PM [vite] (client) hmr update /src/components/CheckinFormPanel.tsx
-1:21:46 PM [vite] (client) hmr update /src/styles.css
-1:21:46 PM [vite] (client) hmr update /src/components/CheckinFormPanel.tsx
+8:06:35 PM [vite] ws proxy error:
+Error: write EPIPE
+    at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+    at writeGeneric (node:internal/stream_base_commons:150:3)
+    at Socket._writeGeneric (node:net:964:11)
+    at Socket._write (node:net:976:8)
+    at writeOrBuffer (node:internal/streams/writable:572:12)
+    at _write (node:internal/streams/writable:501:10)
+    at Writable.write (node:internal/streams/writable:510:10)
+    at Socket.ondata (node:internal/streams/readable:1009:22)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+8:06:35 PM [vite] ws proxy socket error:
+Error: write EPIPE
+    at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+    at writeGeneric (node:internal/stream_base_commons:150:3)
+    at Socket._writeGeneric (node:net:964:11)
+    at Socket._write (node:net:976:8)
+    at writeOrBuffer (node:internal/streams/writable:572:12)
+    at _write (node:internal/streams/writable:501:10)
+    at Writable.write (node:internal/streams/writable:510:10)
+    at Socket.ondata (node:internal/streams/readable:1009:22)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+8:07:37 PM [vite] ws proxy error:
+Error: write EPIPE
+    at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+    at writeGeneric (node:internal/stream_base_commons:150:3)
+    at Socket._writeGeneric (node:net:964:11)
+    at Socket._write (node:net:976:8)
+    at writeOrBuffer (node:internal/streams/writable:572:12)
+    at _write (node:internal/streams/writable:501:10)
+    at Writable.write (node:internal/streams/writable:510:10)
+    at Socket.ondata (node:internal/streams/readable:1009:22)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+8:07:37 PM [vite] ws proxy socket error:
+Error: write EPIPE
+    at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+    at writeGeneric (node:internal/stream_base_commons:150:3)
+    at Socket._writeGeneric (node:net:964:11)
+    at Socket._write (node:net:976:8)
+    at writeOrBuffer (node:internal/streams/writable:572:12)
+    at _write (node:internal/streams/writable:501:10)
+    at Writable.write (node:internal/streams/writable:510:10)
+    at Socket.ondata (node:internal/streams/readable:1009:22)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
