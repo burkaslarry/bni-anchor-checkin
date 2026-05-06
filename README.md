@@ -5,17 +5,20 @@ A Progressive Web App (PWA) for BNI Anchor Chapter meeting attendance check-in.
 ## 🎯 Features
 
 ### Check-in
+
 - **👤 Member Check-in**: Select from dropdown or scan QR code
 - **🎫 Guest Check-in**: Manual name entry or QR scan
 - **🚫 Duplicate Prevention**: Same person cannot check in twice
 
 ### Admin Tools (at `/admin`)
+
 - **🔳 QR Code Generator**: Generate event QR codes
 - **📋 Records Management**: View, search, filter, and delete records
 - **📥 CSV Export**: Download attendance as CSV file
 - **🔍 Member Search**: Search attendance history
 
 ### PWA Features
+
 - 📱 Mobile-first responsive design
 - 🔌 Offline support with sync
 - 📲 Add to home screen
@@ -51,12 +54,12 @@ npm run build
 
 ### Development URLs
 
-- Frontend: http://localhost:5173
-- Admin: http://localhost:5173/admin
+- Frontend: <http://localhost:5173>
+- Admin: <http://localhost:5173/admin>
 
 ## 📁 Project Structure
 
-```
+```text
 src/
 ├── App.tsx                    # Router setup
 ├── api.ts                     # API client
@@ -76,22 +79,24 @@ src/
 
 ## 🌐 Routes
 
-| Path | Description |
-|------|-------------|
-| `/` | Main check-in page (Member/Guest) |
-| `/admin` | Admin tools (QR, Records, Export) |
+| Path     | Description                         |
+|----------|-------------------------------------|
+| `/`      | Main check-in page (Member/Guest)   |
+| `/admin` | Admin tools (QR, Records, Export)   |
 
 ## 📱 Pages
 
 ### Home Page (`/`)
 
 Main check-in interface with two options:
+
 - **👤 會員簽到** (Member Check-in)
 - **🎫 來賓簽到** (Guest Check-in)
 
 ### Admin Page (`/admin`)
 
 Administrative tools:
+
 - **🔳 產生 QR 碼** - Generate event QR codes
 - **📋 簽到記錄** - View and manage records
 - **📥 匯出資料** - Export to CSV
@@ -138,4 +143,4 @@ npm run build
 
 ## 📄 License
 
-MIT License
+Proprietary commercial prototype. See [the root license](../LICENSE.md) before distribution, reuse, or production deployment.
