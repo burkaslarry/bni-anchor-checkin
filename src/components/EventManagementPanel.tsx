@@ -1,16 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   getCurrentEvent,
   EventData,
   exportRecords,
   listEvents,
   activateEvent,
-  deleteEvent
+  deleteEvent,
+  normalizeApiEventId
 } from "../api";
 import { EventSummaryCard } from "./EventSummaryCard";
 import { EventAttendanceDetailModal } from "./EventAttendanceDetailModal";
 import { buildAttendanceCsvFilename } from "../lib/attendanceExportFilename";
 
+/*
+ * Admin「活動管理」：載入 `GET /events/current` + `GET /events`，可啟用、匯出、刪除活動。
+ *
+ * 「當前活動」置頂顯示；與後端現時活動比較 id 時必須經過 normalizeApiEventId（JSON 可能係 number 或數字字串）。
+ * 若在本地／記憶體模式唔存在任何活動，可經 props 自動導去「產生 QR」頁。
+ */
 type EventManagementPanelProps = {
   onNotify: (message: string, type: "success" | "error" | "info") => void;
   onNavigateToGenerate?: () => void;
@@ -112,6 +119,28 @@ export const EventManagementPanel = ({ onNotify, onNavigateToGenerate }: EventMa
     }
   };
 
+  /** 「當前活動」一定置頂：先挑出與後端 `/events/current` 相同 id，再將其餘維持原 API 順序（通常係 id 大到細）。 */
+  const sortedEvents = useMemo(() => {
+    if (!allEvents.length) return allEvents;
+    const cid = normalizeApiEventId(currentEvent?.id);
+    if (cid === undefined) return allEvents;
+
+    let currentEv: EventData | undefined;
+    const rest: EventData[] = [];
+    for (const ev of allEvents) {
+      if (normalizeApiEventId(ev.id) === cid) {
+        if (!currentEv) currentEv = ev;
+        else rest.push(ev);
+      } else {
+        rest.push(ev);
+      }
+    }
+    return currentEv ? [currentEv, ...rest] : [...allEvents];
+  }, [allEvents, currentEvent?.id]);
+
+  const isSameEventCurrent = (ev: EventData) =>
+    normalizeApiEventId(ev.id) === normalizeApiEventId(currentEvent?.id);
+
   const handleExportEvent = async (ev: EventData) => {
     setExportingEventId(ev.id);
     try {
@@ -153,14 +182,14 @@ export const EventManagementPanel = ({ onNotify, onNavigateToGenerate }: EventMa
       ) : allEvents.length > 0 ? (
         <div className="event-details">
           <div className="event-card-stack">
-            {allEvents.map((ev) => (
+            {sortedEvents.map((ev) => (
               <EventSummaryCard
                 key={ev.id}
                 event={ev}
-                isCurrent={currentEvent?.id === ev.id}
+                isCurrent={isSameEventCurrent(ev)}
                 onRefresh={fetchCurrentEvent}
                 onSetActive={() => void handleActivate(ev.id)}
-                setActiveDisabled={currentEvent?.id === ev.id}
+                setActiveDisabled={isSameEventCurrent(ev)}
                 activating={activatingId === ev.id}
                 onDelete={() => void handleDeleteClick(ev.id)}
                 deleting={deletingId === ev.id}
@@ -182,9 +211,9 @@ export const EventManagementPanel = ({ onNotify, onNavigateToGenerate }: EventMa
                 >
                   {exportingEventId === ev.id ? "⏳ 匯出中..." : "📥 匯出 CSV"}
                 </button>
-                {currentEvent?.id === ev.id ? (
+                {isSameEventCurrent(ev) ? (
                   <a
-                    href={`/admin/guests?eventDate=${encodeURIComponent(currentEvent.date)}`}
+                    href={`/admin/guests?eventDate=${encodeURIComponent(ev.date)}`}
                     className="button"
                     style={{ backgroundColor: "#10b981" }}
                   >
