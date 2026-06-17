@@ -980,6 +980,33 @@ export async function bulkImport(
   }
 }
 
+/**
+ * Bulk import observers. POST /api/bulk-import-observers.
+ */
+export async function bulkImportObservers(
+  records: ImportRecord[]
+): Promise<ImportResult> {
+  try {
+    const response = await fetchWithRetry(
+      `${API_BASE}/api/bulk-import-observers`,
+      {
+        method: "POST",
+        headers: jsonHeaders,
+        body: JSON.stringify(records),
+        mode: "cors",
+      },
+      15000,
+      3
+    );
+    return handleResponse(response);
+  } catch (e) {
+    if ((e as Error).name === "AbortError") {
+      throw new Error("連線逾時，請確認後端已啟動並重試");
+    }
+    throw e;
+  }
+}
+
 // ===== Member Management API =====
 
 /** Update member payload (profession, standing). */
@@ -1113,4 +1140,75 @@ export async function deleteGuest(
     mode: "cors"
   });
   return handleResponse(response);
+}
+
+export type ObserverInfo = {
+  id: number;
+  name: string;
+  profession: string;
+  eventDate: string;
+  attended: boolean;
+};
+
+export type CreateObserverRequest = {
+  name: string;
+  profession: string;
+  eventDate?: string;
+};
+
+export type UpdateObserverRequest = {
+  profession?: string;
+  eventDate?: string;
+};
+
+export async function getObservers(eventDate?: string): Promise<{ observers: ObserverInfo[] }> {
+  const q = eventDate ? `?eventDate=${encodeURIComponent(eventDate)}` : "";
+  const response = await fetch(`${API_BASE}/api/observers${q}`, { mode: "cors" });
+  return handleResponse(response);
+}
+
+export async function createObserver(
+  request: CreateObserverRequest
+): Promise<{ status: string; message: string; observer?: ObserverInfo }> {
+  const response = await fetch(`${API_BASE}/api/observers`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify(request),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+export async function updateObserver(
+  name: string,
+  request: UpdateObserverRequest
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/observers/${encodeURIComponent(name)}`, {
+    method: "PUT",
+    headers: jsonHeaders,
+    body: JSON.stringify(request),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+export async function deleteObserver(
+  name: string
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/observers/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+export async function exportObservers(eventDate: string): Promise<Blob> {
+  const response = await fetch(
+    `${API_BASE}/api/observers/export?eventDate=${encodeURIComponent(eventDate)}`,
+    { mode: "cors" }
+  );
+  if (!response.ok) {
+    throw new Error("Failed to export observer attendance");
+  }
+  return response.blob();
 }
