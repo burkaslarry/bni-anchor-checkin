@@ -127,7 +127,6 @@ export default function ReportPage() {
   const formatDate = () =>
     new Date().toLocaleDateString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit" });
 
-  //create record time 
   const formatRecordTime = (isoString: string) => {
     try {
       const date = new Date(isoString);
