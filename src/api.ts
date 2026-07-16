@@ -610,6 +610,7 @@ export type ReportAttendance = {
   role?: AttendeeRole;
   tags?: string[];
   sessionId?: string;
+  substituteFor?: string;
 };
 
 /** Report dashboard statistics. */
@@ -780,6 +781,27 @@ export async function logAttendance(
       eventDate,
       checkedInAt,
       status
+    }),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
+/**
+ * Set or clear substitute attendee on a member attendance row. POST /api/attendance/substitute-for.
+ */
+export async function updateAttendanceSubstitute(
+  eventDate: string,
+  memberName: string,
+  substituteName?: string
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/attendance/substitute-for`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({
+      eventDate: eventDate.trim(),
+      memberName: memberName.trim(),
+      substituteName: substituteName?.trim() || null
     }),
     mode: "cors"
   });
@@ -1043,24 +1065,40 @@ export async function createMember(
   return handleResponse(response);
 }
 
+function isMemberFetchNetworkError(error: unknown): boolean {
+  if (!(error instanceof TypeError)) return false;
+  const msg = error.message;
+  return msg === "Failed to fetch" || msg.includes("NetworkError");
+}
+
 /**
- * Update member by name. PUT /api/members/:name. Side effect: network; backend DB update.
- * @param {string} name - Member name (path)
- * @param {UpdateMemberRequest} request
- * @returns {Promise<{ status: string; message: string }>}
- * @throws {Error} On HTTP error
+ * Update member by id (preferred) or current name. PUT /api/members?memberId= or ?currentName=
  */
 export async function updateMember(
-  name: string,
-  request: UpdateMemberRequest
+  currentName: string,
+  request: UpdateMemberRequest,
+  memberId?: number
 ): Promise<{ status: string; message: string }> {
-  const response = await fetch(`${API_BASE}/api/members/${encodeURIComponent(name)}`, {
-    method: "PUT",
-    headers: jsonHeaders,
-    body: JSON.stringify(request),
-    mode: "cors"
-  });
-  return handleResponse(response);
+  const body = JSON.stringify(request);
+  const putMember = (params: URLSearchParams) =>
+    fetch(`${API_BASE}/api/members?${params.toString()}`, {
+      method: "PUT",
+      headers: jsonHeaders,
+      body,
+      mode: "cors"
+    });
+
+  if (memberId != null) {
+    try {
+      return await handleResponse(await putMember(new URLSearchParams({ memberId: String(memberId) })));
+    } catch (error) {
+      if (!isMemberFetchNetworkError(error)) throw error;
+    }
+  }
+
+  return handleResponse(
+    await putMember(new URLSearchParams({ currentName }))
+  );
 }
 
 /** Update guest payload (name, profession, referrer, eventDate). */
@@ -1120,19 +1158,27 @@ export async function createGuest(
 }
 
 /**
- * Delete member by name. DELETE /api/members/:name. Side effect: network; backend DB delete.
- * @param {string} name - Member name (path)
- * @returns {Promise<{ status: string; message: string }>}
- * @throws {Error} On HTTP error
+ * Delete member by id (preferred) or name. DELETE /api/members?memberId= or ?name=
  */
 export async function deleteMember(
-  name: string
+  name: string,
+  memberId?: number
 ): Promise<{ status: string; message: string }> {
-  const response = await fetch(`${API_BASE}/api/members/${encodeURIComponent(name)}`, {
-    method: "DELETE",
-    mode: "cors"
-  });
-  return handleResponse(response);
+  const deleteMemberRequest = (params: URLSearchParams) =>
+    fetch(`${API_BASE}/api/members?${params.toString()}`, {
+      method: "DELETE",
+      mode: "cors"
+    });
+
+  if (memberId != null) {
+    try {
+      return await handleResponse(await deleteMemberRequest(new URLSearchParams({ memberId: String(memberId) })));
+    } catch (error) {
+      if (!isMemberFetchNetworkError(error)) throw error;
+    }
+  }
+
+  return handleResponse(await deleteMemberRequest(new URLSearchParams({ name })));
 }
 
 /**
