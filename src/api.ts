@@ -12,7 +12,7 @@ export type EventAttendance = {
   status: string;
 };
 
-/** One check-in record (name, domain, type, timestamps, role, tags, referrer). */
+/** One check-in record (name, domain, type, timestamps, role, tags, referrer, substituteFor). */
 export type CheckInRecord = {
   name: string;
   domain: string;
@@ -22,6 +22,7 @@ export type CheckInRecord = {
   role?: AttendeeRole;
   tags?: string[];
   referrer?: string;
+  substituteFor?: string;
 };
 
 /** Role types for attendees. */
@@ -393,6 +394,24 @@ export async function deleteRecord(index: number): Promise<{ status: string; mes
   return handleResponse(response);
 }
 
+/** Mark attendee absent and clear check-in. POST /api/events/attendance-corrections */
+export async function markAttendanceAbsent(
+  eventDate: string,
+  name: string
+): Promise<{ status: string; removed?: number; warnings?: string[] }> {
+  const response = await fetch(`${API_BASE}/api/events/attendance-corrections`, {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({
+      eventDate: eventDate.trim(),
+      removeCheckIns: [name.trim()],
+      addCheckIns: []
+    }),
+    mode: "cors"
+  });
+  return handleResponse(response);
+}
+
 /**
  * Export records as CSV blob. GET /api/export. Side effect: network.
  * @returns {Promise<Blob>} CSV file blob
@@ -594,6 +613,24 @@ export async function deleteEvent(
     mode: "cors"
   });
   return handleResponse(response);
+}
+
+/** Update event name, start time, and/or end time. PUT /api/events/{id}. Returns updated event. */
+export async function updateEvent(
+  eventId: number,
+  patch: { name?: string; startTime?: string; endTime?: string }
+): Promise<EventData> {
+  const response = await fetch(`${API_BASE}/api/events/${eventId}`, {
+    method: "PUT",
+    headers: jsonHeaders,
+    body: JSON.stringify(patch),
+    mode: "cors"
+  });
+  const data = await handleResponse<{ status: string; event: EventData }>(response);
+  if (!data.event) {
+    throw new Error("Update succeeded but no event returned");
+  }
+  return data.event;
 }
 
 /** Report page: attendance status. */
