@@ -19,7 +19,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@supabase/supabase-js": "^2.98.0",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "jspdf": "^4.1.0",
@@ -29,7 +28,7 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-dropzone": "^14.4.1",
-    "react-router-dom": "^7.9.6"
+    "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
