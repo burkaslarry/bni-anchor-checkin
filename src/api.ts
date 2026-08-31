@@ -54,6 +54,8 @@ export type MemberInfo = {
   membershipId?: string;
   position?: string;
   chapterId?: number;
+  email?: string;
+  phoneNumber?: string;
 };
 
 export type ChapterInfo = {
@@ -1611,4 +1613,103 @@ export async function exportObservers(eventDate: string): Promise<Blob> {
     throw new Error("Failed to export observer attendance");
   }
   return response.blob();
+}
+
+/**
+ * One member row from GET `/api/traffic-light/latest` (Excel snapshot).
+ * `light` matches [MemberStanding].
+ */
+export type TrafficLightRow = {
+  name: string;
+  present: number;
+  absent: number;
+  late: number;
+  medical: number;
+  substitute: number;
+  referralsGiven: number;
+  referralsReceived: number;
+  visitors: number;
+  oneToOnes: number;
+  training: number;
+  bizGive: number;
+  plsPct: number;
+  totalPts: number;
+  light: MemberStanding;
+};
+
+/** Latest uploaded Traffic Light report (Anchor only). */
+export type TrafficLightReport = {
+  id: number;
+  chapterId: number;
+  periodLabel: string;
+  periodStart: string | null;
+  periodEnd: string | null;
+  greenGoal: number;
+  yellowGoal: number;
+  filename: string | null;
+  createdAt: string | null;
+  rows: TrafficLightRow[];
+};
+
+/** POST `/api/traffic-light/reminder` — `source` is `deepseek` or `template`. */
+export type TrafficLightReminder = {
+  name: string;
+  light: MemberStanding;
+  totalPts: number;
+  emailSubject: string;
+  emailBody: string;
+  whatsappText: string;
+  source: string;
+};
+
+/**
+ * POST `/api/traffic-light/upload` — multipart Excel. Anchor-only on the server.
+ * @param file `.xlsx` (BNI Member Traffic Light)
+ * @param chapter optional tag (`anchor`)
+ * @returns saved report; throws on 4xx/5xx via [handleResponse]
+ */
+export async function uploadTrafficLightExcel(
+  file: File,
+  chapter?: string | null
+): Promise<{ status: string; message: string; report: TrafficLightReport }> {
+  const body = new FormData();
+  body.append("file", file);
+  const response = await fetch(withChapterQuery(`${API_BASE}/api/traffic-light/upload`, chapter), {
+    method: "POST",
+    body,
+    mode: "cors",
+  });
+  return handleResponse(response);
+}
+
+/**
+ * GET `/api/traffic-light/latest`.
+ * @returns report or `null` when none uploaded (HTTP 404)
+ */
+export async function getLatestTrafficLight(
+  chapter?: string | null
+): Promise<TrafficLightReport | null> {
+  const response = await fetch(withChapterQuery(`${API_BASE}/api/traffic-light/latest`, chapter), {
+    mode: "cors",
+  });
+  if (response.status === 404) return null;
+  return handleResponse(response);
+}
+
+/**
+ * POST `/api/traffic-light/reminder` — DeepSeek or template copy for one member.
+ * Side effects: backend may call DeepSeek; this client only fetches.
+ */
+export async function generateTrafficLightReminder(
+  name: string,
+  chapter?: string | null,
+  periodLabel?: string
+): Promise<TrafficLightReminder> {
+  const response = await fetch(withChapterQuery(`${API_BASE}/api/traffic-light/reminder`, chapter), {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify({ name, periodLabel }),
+    mode: "cors",
+  });
+  return handleResponse(response);
 }
