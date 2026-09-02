@@ -309,3 +309,206 @@ export function whatsappHref(phone: string, text: string): string {
 export function mailtoHref(email: string, subject: string, body: string): string {
   return `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
+
+/** Headcount by light for one snapshot (not summed across uploads). */
+export type LightCounts = Record<TrafficLight, number>;
+
+/** One member on the at-risk / imbalance lists. */
+export type LtNamedLight = {
+  name: string;
+  light: TrafficLight;
+  totalPts: number;
+};
+
+/** Referral given vs received gap (positive delta = received more than given). */
+export type ReferralImbalance = {
+  name: string;
+  given: number;
+  received: number;
+  delta: number;
+};
+
+/**
+ * Chapter board-pack stats for a single Traffic Light snapshot.
+ * [vsPrev] compares green % and name-matched light rank vs the previous upload.
+ */
+export type ChapterLtStats = {
+  memberCount: number;
+  weeks: number;
+  counts: LightCounts;
+  pct: LightCounts;
+  vsPrev: {
+    greenPctPts: number;
+    improved: number;
+    worsened: number;
+  } | null;
+  atRisk: LtNamedLight[];
+  attendanceRatePct: number;
+  referralsPerWeek: number;
+  visitorsPerWeek: number;
+  oneToOnesPerWeek: number;
+  tyfcbTotal: number;
+  tyfcbMedian: number;
+  trainingPct: number;
+  referralImbalance: ReferralImbalance[];
+  unmatchedExcel: string[];
+  unmatchedRoster: string[];
+};
+
+const EMPTY_COUNTS: LightCounts = { GREEN: 0, YELLOW: 0, RED: 0, BLACK: 0 };
+
+function lightRank(light: TrafficLight): number {
+  switch (light) {
+    case "GREEN":
+      return 3;
+    case "YELLOW":
+      return 2;
+    case "RED":
+      return 1;
+    case "BLACK":
+      return 0;
+  }
+}
+
+/** Count GREEN/YELLOW/RED/BLACK in one snapshot. */
+export function countLights(rows: Array<{ light: TrafficLight }>): LightCounts {
+  const c = { ...EMPTY_COUNTS };
+  for (const r of rows) {
+    if (r.light in c) c[r.light] += 1;
+  }
+  return c;
+}
+
+/** Integer percents; 0 when the snapshot is empty. */
+export function lightPct(counts: LightCounts, total: number): LightCounts {
+  if (total <= 0) return { ...EMPTY_COUNTS };
+  return {
+    GREEN: Math.round((counts.GREEN / total) * 100),
+    YELLOW: Math.round((counts.YELLOW / total) * 100),
+    RED: Math.round((counts.RED / total) * 100),
+    BLACK: Math.round((counts.BLACK / total) * 100),
+  };
+}
+
+/** Median of a numeric list; 0 if empty. */
+export function medianNumber(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+/**
+ * Hong Kong wall-clock for upload `createdAt`.
+ * @param iso ISO-8601 from the API
+ */
+export function formatUploadAt(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("zh-HK", {
+    timeZone: "Asia/Hong_Kong",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/**
+ * Green-share delta vs previous snapshot, in percentage points.
+ * @returns null when there is no previous upload
+ */
+export function formatGreenPctDelta(nowPct: number, prevPct: number | null | undefined): string | null {
+  if (prevPct == null) return null;
+  const d = nowPct - prevPct;
+  if (d === 0) return "綠燈% 持平";
+  return d > 0 ? `綠燈% ↑ ${d} 個百分點` : `綠燈% ↓ ${Math.abs(d)} 個百分點`;
+}
+
+/**
+ * LT dashboard numbers for one Excel snapshot vs optional previous snapshot and EventXP roster.
+ * Side effects: none.
+ */
+export function buildChapterLtStats(
+  rows: TrafficLightMetrics[],
+  rosterNames: string[],
+  previousRows?: TrafficLightMetrics[] | null
+): ChapterLtStats {
+  const memberCount = rows.length;
+  const counts = countLights(rows);
+  const pct = lightPct(counts, memberCount);
+  const weeks = Math.max(1, ...rows.map((r) => meetingWeeks(r)), 1);
+  const present = rows.reduce((s, r) => s + r.present, 0);
+  const attendedish = rows.reduce(
+    (s, r) => s + r.present + r.absent + r.late + r.medical + r.substitute,
+    0
+  );
+  const given = rows.reduce((s, r) => s + r.referralsGiven, 0);
+  const visitors = rows.reduce((s, r) => s + r.visitors, 0);
+  const oneToOnes = rows.reduce((s, r) => s + r.oneToOnes, 0);
+  const tyfcb = rows.map((r) => r.bizGive);
+  const roster = new Set(rosterNames.map((n) => n.trim().toLowerCase()).filter(Boolean));
+  const excel = new Set(rows.map((r) => r.name.trim().toLowerCase()).filter(Boolean));
+
+  let vsPrev: ChapterLtStats["vsPrev"] = null;
+  if (previousRows && previousRows.length > 0) {
+    const prevPct = lightPct(countLights(previousRows), previousRows.length);
+    const prevByName = new Map(previousRows.map((r) => [r.name.trim().toLowerCase(), r]));
+    let improved = 0;
+    let worsened = 0;
+    for (const row of rows) {
+      const prev = prevByName.get(row.name.trim().toLowerCase());
+      if (!prev) continue;
+      const delta = lightRank(row.light) - lightRank(prev.light);
+      if (delta > 0) improved += 1;
+      if (delta < 0) worsened += 1;
+    }
+    vsPrev = {
+      greenPctPts: pct.GREEN - prevPct.GREEN,
+      improved,
+      worsened,
+    };
+  }
+
+  const unmatchedExcel = rows
+    .filter((r) => !roster.has(r.name.trim().toLowerCase()))
+    .map((r) => r.name);
+  const unmatchedRoster = rosterNames.filter((n) => {
+    const key = n.trim().toLowerCase();
+    return key.length > 0 && !excel.has(key);
+  });
+
+  return {
+    memberCount,
+    weeks,
+    counts,
+    pct,
+    vsPrev,
+    atRisk: rows
+      .filter((r) => r.light === "RED" || r.light === "BLACK")
+      .sort((a, b) => a.totalPts - b.totalPts)
+      .map((r) => ({ name: r.name, light: r.light, totalPts: r.totalPts })),
+    attendanceRatePct: attendedish > 0 ? Math.round((present / attendedish) * 100) : 0,
+    referralsPerWeek: given / weeks,
+    visitorsPerWeek: visitors / weeks,
+    oneToOnesPerWeek: oneToOnes / weeks,
+    tyfcbTotal: tyfcb.reduce((s, v) => s + v, 0),
+    tyfcbMedian: medianNumber(tyfcb),
+    trainingPct:
+      memberCount > 0 ? Math.round((rows.filter((r) => r.training >= 2).length / memberCount) * 100) : 0,
+    referralImbalance: rows
+      .map((r) => ({
+        name: r.name,
+        given: r.referralsGiven,
+        received: r.referralsReceived,
+        delta: r.referralsReceived - r.referralsGiven,
+      }))
+      .filter((x) => x.delta >= 5)
+      .sort((a, b) => b.delta - a.delta)
+      .slice(0, 8),
+    unmatchedExcel,
+    unmatchedRoster,
+  };
+}
