@@ -833,14 +833,6 @@ export const CheckinFormPanel = ({ onNotify, chapterTag = "anchor" }: CheckinFor
                         · 邀請人: {(item as Guest).referrer}
                       </span>
                     )}
-                    {checkinType === "guest" && (
-                      <span style={{ marginLeft: "0.5rem", opacity: 0.8 }}>
-                        · 成為Member?{" "}
-                        {(item as Guest).becameMember === true || (item as Guest).becameMember === "true"
-                          ? "Yes"
-                          : "No"}
-                      </span>
-                    )}
                     {checkinType === "observer" && (item as Observer).event_date?.trim() && (
                       <span style={{ marginLeft: "0.5rem", opacity: 0.8 }}>
                         · {(item as Observer).event_date}
